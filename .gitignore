@@ -1,0 +1,13 @@
+# User presets
+CMakeUserPresets.json
+
+# Build
+build
+out
+
+# VS Code
+.vs
+.vscode
+
+# Environment
+vcpkg_installed
