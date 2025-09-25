@@ -1,40 +1,38 @@
-﻿# CMakeList.txt : Top-level CMake project file, do global configuration
-# and include sub-projects here.
-#
-cmake_minimum_required (VERSION 3.15...4.0)
+﻿cmake_minimum_required(VERSION 3.30)
 
-project(
-  Project
-  VERSION 1.0
-  LANGUAGES CXX)
+project(icp VERSION 2025.0.0 LANGUAGES CXX)
 
-# Used modern C++ standard
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# vcpkg toolchain (use CVPKG_ROOT for global) 
-set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" CACHE STRING "")
+set(CMAKE_BUILD_TYPE Debug)
 
-find_package(OpenCV CONFIG REQUIRED)
-find_package(GLEW CONFIG REQUIRED)
-find_package(glfw3 CONFIG REQUIRED)
-find_package(OpenGL REQUIRED) # built-in FindOpenGL, uses opengl32.lib
+find_package(glm           CONFIG REQUIRED)
+find_package(GLEW                 REQUIRED)
+find_package(glfw3         CONFIG REQUIRED)
+find_package(nlohmann_json CONFIG REQUIRED)
 
-# Sources
-file(GLOB SOURCES "${Project_SOURCE_DIR}/source/*.cpp")
+if(WIN32)
+    find_package(OpenCV CONFIG REQUIRED PATHS "C:/Users/kubix/opencv/build/x64/vc16/lib")
+elseif(UNIX)
+    find_package(OpenCV CONFIG REQUIRED)
+endif()
 
-# Executable target
-add_executable(app main.cpp ${SOURCES})
+set(PROJECT_SOURCES
+    main.cpp
+)
 
-# Include dirs (often unnecessary, but OpenCV is special)
-target_include_directories(app PRIVATE ${OpenCV_INCLUDE_DIRS})
+add_executable(${PROJECT_NAME} ${PROJECT_SOURCES})
 
-target_link_libraries(app PRIVATE OpenGL::GL)
-
-# Link libraries
-target_link_libraries(app
-  PRIVATE
-    ${OpenCV_LIBS}     # from OpenCVConfig.cmake
+target_link_libraries(${PROJECT_NAME} PRIVATE 
     GLEW::GLEW
     glfw
-) 
+    glm::glm
+    nlohmann_json::nlohmann_json
+    ${OpenCV_LIBS}
+)
+
+target_include_directories(${PROJECT_NAME} PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${OpenCV_INCLUDE_DIRS}
+)
