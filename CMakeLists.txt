@@ -13,21 +13,16 @@ find_package(glfw3         CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 
 if(WIN32)
-    find_package(OpenCV CONFIG REQUIRED PATHS "C:/Users/kubix/opencv/build/x64/vc16/lib")
+    find_package(OpenCV CONFIG REQUIRED PATHS "${OPENCV_DIR}/x64/vc16/lib")
 elseif(UNIX)
     find_package(OpenCV CONFIG REQUIRED)
 endif()
 
-file(GLOB SOURCES 
-    main.cpp
-    "${Project_SOURCE_DIR}/source/*.cpp"
+file(GLOB_RECURSE SOURCES 
+    "${PROJECT_SOURCE_DIR}/source/*.cpp"
 )
 
-set(PROJECT_SOURCES
-    ${SOURCES}
-)
-
-add_executable(${PROJECT_NAME} ${PROJECT_SOURCES})
+add_executable(${PROJECT_NAME} main.cpp ${SOURCES})
 
 target_link_libraries(${PROJECT_NAME} PRIVATE 
     GLEW::GLEW

@@ -1,8 +1,11 @@
-#include "source/helloworld.cpp"
+#include "source/Static/Static.hpp"
 
-int main(){
+App app;
 
-    runProject();
-
+int main()
+{
+    //runProject();
+    app.init();
+    app.run();
     return 0;
 }
