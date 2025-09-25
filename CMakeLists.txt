@@ -1,4 +1,4 @@
-﻿cmake_minimum_required(VERSION 3.30)
+﻿cmake_minimum_required(VERSION 3.28)
 
 project(icp VERSION 2025.0.0 LANGUAGES CXX)
 
@@ -18,8 +18,13 @@ elseif(UNIX)
     find_package(OpenCV CONFIG REQUIRED)
 endif()
 
-set(PROJECT_SOURCES
+file(GLOB SOURCES 
     main.cpp
+    "${Project_SOURCE_DIR}/source/*.cpp"
+)
+
+set(PROJECT_SOURCES
+    ${SOURCES}
 )
 
 add_executable(${PROJECT_NAME} ${PROJECT_SOURCES})
