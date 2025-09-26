@@ -1,3 +1,5 @@
+#include "include/demos/Helloworld/helloworld.hpp"
+
 #include <iostream>
 #include <glm/glm.hpp>
 #define GLM_ENABLE_EXPERIMENTAL
@@ -7,7 +9,7 @@
 #include <opencv2/opencv.hpp>
 
 
-int runProject()
+int runHelloWorld()
 {
     std::cout << "Hello!\n";
 

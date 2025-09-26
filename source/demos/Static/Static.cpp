@@ -1,30 +1,10 @@
-#include "Static.hpp"
+#include "include/demos/Static/Static.hpp"
+#include "include/render/drawing.hpp"
 
-App::App()
-{
-    // default constructor
-    // nothing to do here (so far...)
-}
+#include <iostream>
+#include <opencv2/opencv.hpp>
 
-bool App::init()
-{
-    try {
-        // all initialization code
-        //...
-
-        // some init
-        // if (not_success)
-        //  throw std::runtime_error("something went bad");
-    }
-    catch (std::exception const& e) {
-        std::cerr << "Init failed : " << e.what() << std::endl;
-        throw;
-    }
-
-    return true;
-}
-
-int App::run(void)
+int static_treshold_search(void)
 {
     try {
         // read image
@@ -44,6 +24,7 @@ int App::run(void)
         // compute centroid of white pixels (average X,Y coordinate of all white pixels)
         cv::Point2f center;
         cv::Point2f center_normalized;
+        float white_pixel_count = 0;
 
         for (int y = 0; y < frame.rows; y++) //y
         {
@@ -57,7 +38,7 @@ int App::run(void)
 
 
                 // FIND THRESHOLD (value 0..255)
-                if (Y < 128) {
+                if (Y < 240) {
                     // set output pixel black
                     frame2.at<cv::Vec3b>(y, x) = cv::Vec3b(0, 0, 0);
                 }
@@ -66,6 +47,9 @@ int App::run(void)
                     frame2.at<cv::Vec3b>(y, x) = cv::Vec3b(255, 255, 255);
 
                     //update centroid...
+                    center.x += x;
+                    center.y += y;
+                    white_pixel_count += 1;
                 }
 
             }
@@ -80,6 +64,17 @@ int App::run(void)
 
         std::chrono::duration<double> elapsed_seconds = end - start;
         std::cout << "Elapsed time: " << elapsed_seconds.count() << "sec" << std::endl;
+
+        if (white_pixel_count > 0) {
+            center.x /= white_pixel_count;
+            center.y /= white_pixel_count;
+
+            center_normalized.x = center.x;
+            center_normalized.y = center.y;
+
+            center_normalized.x /= frame.cols;
+            center_normalized.y /= frame.rows;
+        }
 
         // highlight the center of object
         draw_cross(frame, center.x, center.y, 25);
@@ -107,39 +102,4 @@ int App::run(void)
     }
 
     return EXIT_SUCCESS;
-}
-
-App::~App()
-{
-    // clean-up
-    cv::destroyAllWindows();
-    std::cout << "Bye...\n";
-}
-
-void App::draw_cross(cv::Mat& img, int x, int y, int size)
-{
-    cv::Point p1(x - size / 2, y);
-    cv::Point p2(x + size / 2, y);
-    cv::Point p3(x, y - size / 2);
-    cv::Point p4(x, y + size / 2);
-
-    cv::line(img, p1, p2, CV_RGB(255, 0, 0), 3);
-    cv::line(img, p3, p4, CV_RGB(255, 0, 0), 3);
-}
-
-void App::draw_cross_normalized(cv::Mat& img, cv::Point2f center_normalized, int size)
-{
-    center_normalized.x = std::clamp(center_normalized.x, 0.0f, 1.0f);
-    center_normalized.y = std::clamp(center_normalized.y, 0.0f, 1.0f);
-    size = std::clamp(size, 1, std::min(img.cols, img.rows));
-
-    cv::Point2f center_absolute(center_normalized.x * img.cols, center_normalized.y * img.rows);
-
-    cv::Point2f p1(center_absolute.x - size / 2, center_absolute.y);
-    cv::Point2f p2(center_absolute.x + size / 2, center_absolute.y);
-    cv::Point2f p3(center_absolute.x, center_absolute.y - size / 2);
-    cv::Point2f p4(center_absolute.x, center_absolute.y + size / 2);
-
-    cv::line(img, p1, p2, CV_RGB(255, 0, 0), 3);
-    cv::line(img, p3, p4, CV_RGB(255, 0, 0), 3);
 }

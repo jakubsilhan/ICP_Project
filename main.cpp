@@ -1,11 +1,12 @@
-#include "source/Static/Static.hpp"
+//#include "include/demos/Helloworld/helloworld.hpp"
+#include "include/demos/Static/Static.hpp"
 
-App app;
 
 int main()
 {
-    //runProject();
-    app.init();
-    app.run();
+    //runHelloWorld();
+
+    static_treshold_search();
+
     return 0;
 }
