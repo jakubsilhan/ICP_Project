@@ -8,7 +8,7 @@ int static_treshold_search(void)
 {
     try {
         // read image
-        cv::Mat frame = cv::imread("../resources/lightbulb.jpg");  //can be JPG,PNG,GIF,TIFF,...
+        cv::Mat frame = cv::imread("resources/lightbulb.jpg");  //can be JPG,PNG,GIF,TIFF,...
 
         if (frame.empty())
             throw std::runtime_error("Empty file? Wrong path?");
