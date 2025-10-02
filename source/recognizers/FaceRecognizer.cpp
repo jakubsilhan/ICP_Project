@@ -6,7 +6,7 @@ FaceRecognizer::FaceRecognizer() {
 }
 
 bool FaceRecognizer::init() {
-    if (!classifier.load("../resources/haarcascade_frontalface_default.xml")) {
+    if (!classifier.load("resources/haarcascade_frontalface_default.xml")) {
         std::cerr << "Error: Could not load face classifier.\n";
         return false;
     }

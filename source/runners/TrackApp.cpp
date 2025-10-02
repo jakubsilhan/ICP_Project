@@ -42,6 +42,8 @@ int TrackApp::run() {
         // 4. Measure and display fps
         
     } while (cv::pollKey() != 27);
+
+    return 0;
 }
 
 TrackApp::~TrackApp()
