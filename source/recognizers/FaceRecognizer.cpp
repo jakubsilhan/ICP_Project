@@ -30,32 +30,39 @@ int FaceRecognizer::run() {
         }
 
         // find face
-        cv::Point2f center = find_face(frame);
+        std::vector<cv::Point2f> centers = find_face(frame);
 
         // display result
         cv::Mat scene_cross;
         frame.copyTo(scene_cross);
-        draw_cross_normalized(scene_cross, center, 30);
+        for (auto center : centers) {
+            draw_cross_normalized(scene_cross, center, 30);
+        }
         cv::imshow("scene", scene_cross);
     } while (cv::pollKey() != 27); // Loop until ESC
 
     return EXIT_SUCCESS;
 }
 
-cv::Point2f FaceRecognizer::find_face(cv::Mat& frame) {
+std::vector<cv::Point2f> FaceRecognizer::find_face(cv::Mat& frame) {
     cv::Point2f center(0.0f, 0.0f); 
 
     cv::Mat scene_grey;
     cv::cvtColor(frame, scene_grey, cv::COLOR_BGR2GRAY);
 
     std::vector<cv::Rect> faces;
+    std::vector<cv::Point2f> centers;
     classifier.detectMultiScale(scene_grey, faces);
     if (faces.size() > 0) {
-        center.x = (faces[0].x + faces[0].width / 2.0f) / frame.cols;
-        center.y = (faces[0].y + faces[0].height / 2.0f) / frame.rows;
+        for (auto face : faces) {
+            auto x_cord = (face.x + face.width / 2.0f) / frame.cols;
+            auto y_cord = (face.y + face.height / 2.0f) / frame.rows;
+            cv::Point2f center(x_cord, y_cord);
+            centers.push_back(center);
+        }
     }
 
-    return center;
+    return centers;
 }
 
 FaceRecognizer::~FaceRecognizer()

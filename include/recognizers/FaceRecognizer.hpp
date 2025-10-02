@@ -8,11 +8,10 @@ public:
 	bool init(void);
 	int run(void);
 	~FaceRecognizer();
+	std::vector<cv::Point2f> find_face(cv::Mat& frame);
 
 
 private:
 	cv::CascadeClassifier classifier;
 	cv::VideoCapture captureDevice;
-
-	cv::Point2f find_face(cv::Mat& frame);
 };
