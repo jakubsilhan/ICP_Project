@@ -1,0 +1,45 @@
+#include "include/runners/TrackApp.hpp"
+#include "include/render/drawings.hpp"
+
+TrackApp::TrackApp() {
+    // Constructor
+}
+
+bool TrackApp::init() {
+    faceRecognizer.init();
+
+    if (!captureDevice.open(0)) {
+        std::cerr << "Error: Could not open camera.\n";
+        return false;
+    }
+    return true;
+}
+
+int TrackApp::run() {
+    cv::Mat frame;
+
+    do {
+        captureDevice.read(frame);
+        if (frame.empty()) {
+            std::cerr << "Cam disconnected? End of video?" << std::endl;
+            return -1;
+        }
+
+        // find face
+        std::vector<cv::Point2f> centers = faceRecognizer.find_face(frame);
+
+        // Display logic
+        // 1. No face -> static image
+
+        // 2. One face -> track "some" object (track red)
+
+        // 3. More than one face -> display warning 
+
+        // 4. Measure and display fps
+        
+    } while (cv::pollKey() != 27);
+}
+
+TrackApp::~TrackApp()
+{
+}

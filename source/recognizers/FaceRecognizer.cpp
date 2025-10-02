@@ -11,16 +11,16 @@ bool FaceRecognizer::init() {
         return false;
     }
 
-    if (!captureDevice.open(0)) {
-        std::cerr << "Error: Could not open camera.\n";
-        return false;
-    }
-
     return true;
 }
 
 int FaceRecognizer::run() {
     cv::Mat frame; // captured frame
+
+    if (!captureDevice.open(0)) {
+        std::cerr << "Error: Could not open camera.\n";
+        return false;
+    }
 
     do {
         captureDevice.read(frame);
