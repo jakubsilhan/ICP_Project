@@ -8,6 +8,9 @@ TrackApp::TrackApp() {
 bool TrackApp::init() {
     faceRecognizer.init();
 
+    staticImage = cv::imread("resources/lightbulb.jpg"); // TODO change image
+    warningImage = cv::imread("resources/warning.jpg");
+
     if (!captureDevice.open(0)) {
         std::cerr << "Error: Could not open camera.\n";
         return false;
@@ -30,6 +33,7 @@ int TrackApp::run() {
 
         // Display logic
         // 1. No face -> static image
+
 
         // 2. One face -> track "some" object (track red)
 

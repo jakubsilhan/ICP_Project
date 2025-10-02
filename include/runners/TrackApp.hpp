@@ -15,4 +15,6 @@ private:
 	FaceRecognizer faceRecognizer;
 	RedRecognizer redRecognizer;
 	cv::VideoCapture captureDevice;
+	cv::Mat staticImage;
+	cv::Mat warningImage;
 };
