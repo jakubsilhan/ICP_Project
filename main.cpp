@@ -5,7 +5,10 @@ int main()
 {
     TrackApp trackApp;
 
-    trackApp.init();
+    if (!trackApp.init()) {
+        return 1;
+    };
+
     trackApp.run();
 
     return 0;

@@ -32,14 +32,24 @@ int TrackApp::run() {
         std::vector<cv::Point2f> centers = faceRecognizer.find_face(frame);
 
         // Display logic
-        // 1. No face -> static image
+        switch (centers.size()) {
+            // 1. No face -> static image
+            case 0:
+                cv::imshow("app", staticImage);
+                break;
+            
+            // 2. One face -> track "some" object (track red)
+            case 1:
+                draw_cross_normalized(frame, redRecognizer.find_red(frame), 30);
+                cv::imshow("app", frame);
+                break;
 
+            // 3. More than one face -> display warning
+            default:
+                cv::imshow("app", warningImage);
+        }
 
-        // 2. One face -> track "some" object (track red)
-
-        // 3. More than one face -> display warning 
-
-        // 4. Measure and display fps
+        // Measure and display fps
         
     } while (cv::pollKey() != 27);
 
