@@ -50,6 +50,9 @@ int TrackApp::run() {
         }
 
         // Measure and display fps
+        if (FPS.is_updated())
+            std::cout << "FPS: " << FPS.get() << std::endl;
+        FPS.update();
         
     } while (cv::pollKey() != 27);
 
