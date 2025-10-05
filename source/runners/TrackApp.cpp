@@ -8,7 +8,7 @@ TrackApp::TrackApp() {
 bool TrackApp::init() {
     faceRecognizer.init();
 
-    staticImage = cv::imread("resources/lightbulb.jpg"); // TODO change image
+    staticImage = cv::imread("resources/lock.png");
     warningImage = cv::imread("resources/warning.jpg");
 
     if (!captureDevice.open(0)) {
