@@ -18,11 +18,11 @@ elseif(UNIX)
     find_package(OpenCV CONFIG REQUIRED)
 endif()
 
-file(GLOB_RECURSE SOURCES 
+file(GLOB_RECURSE PROJECT_SOURCES 
     "${PROJECT_SOURCE_DIR}/source/*.cpp"
 )
 
-add_executable(${PROJECT_NAME} main.cpp ${SOURCES})
+add_executable(${PROJECT_NAME} ${PROJECT_SOURCES})
 
 target_link_libraries(${PROJECT_NAME} PRIVATE 
     GLEW::GLEW
