@@ -1,5 +1,6 @@
 #include "include/runners/ThreadTrackApp.hpp"
 #include "include/render/drawings.hpp"
+#include <thread>
 
 ThreadTrackApp::ThreadTrackApp() {
     // Constructor
@@ -20,12 +21,40 @@ bool ThreadTrackApp::init() {
 
 int ThreadTrackApp::run() {
     cv::Mat frame;
+    std::atomic<bool> endedMain(false);
+    std::atomic<bool> endedThread(false);
+
+    std::jthread tracker(std::bind(&ThreadTrackApp::trackerThread, this, std::ref(captureDevice), std::ref(endedMain), std::ref(endedThread)));
 
     do {
+        if (endedThread) break;
+        auto poppedFrameOpt = deQueue.tryPopFront();
+        if (poppedFrameOpt) {
+            poppedFrameOpt->copyTo(frame);
+            cv::imshow("Scene", frame);
+        }
+
+        // Measure and display fps
+        if (FPS_main.is_updated())
+            std::cout << "FPS main: " << FPS_main.get() << std::endl;
+        FPS_main.update();
+
+    } while (cv::pollKey() != 27);
+
+    endedMain = true;
+
+    return 0;
+}
+
+void ThreadTrackApp::trackerThread(cv::VideoCapture& captureDevice, std::atomic<bool>& endedMain, std::atomic<bool>& endedThread) {
+    cv::Mat frame;
+
+    while(!endedMain){
         captureDevice.read(frame);
         if (frame.empty()) {
             std::cerr << "Cam disconnected? End of video?" << std::endl;
-            return -1;
+            endedThread = true;
+            return;
         }
 
         // find face
@@ -35,28 +64,25 @@ int ThreadTrackApp::run() {
         switch (centers.size()) {
             // 1. No face -> static image
         case 0:
-            cv::imshow("app", staticImage);
+            deQueue.pushBack(staticImage);
             break;
 
             // 2. One face -> track "some" object (track red)
         case 1:
+            draw_cross_normalized(frame, centers.front(), 30, CV_RGB(0, 255, 0));
             draw_cross_normalized(frame, redRecognizer.find_red(frame), 30);
-            cv::imshow("app", frame);
+            deQueue.pushBack(frame);
             break;
 
             // 3. More than one face -> display warning
         default:
-            cv::imshow("app", warningImage);
+            deQueue.pushBack(warningImage);
         }
 
-        // Measure and display fps
-        if (FPS.is_updated())
-            std::cout << "FPS: " << FPS.get() << std::endl;
-        FPS.update();
-
-    } while (cv::pollKey() != 27);
-
-    return 0;
+        if (FPS_tracker.is_updated())
+            std::cout << "FPS tracker: " << FPS_tracker.get() << std::endl;
+        FPS_tracker.update();
+    }
 }
 
 ThreadTrackApp::~ThreadTrackApp()
