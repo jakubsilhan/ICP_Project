@@ -5,12 +5,12 @@
 #include "include/recognizers/RedRecognizer.hpp"
 #include "include/utils/fps_meter.hpp"
 
-class TrackApp {
+class ThreadTrackApp {
 public:
-	TrackApp();
+	ThreadTrackApp();
 	bool init(void);
 	int run(void);
-	~TrackApp();
+	~ThreadTrackApp();
 
 private:
 	FaceRecognizer faceRecognizer;
