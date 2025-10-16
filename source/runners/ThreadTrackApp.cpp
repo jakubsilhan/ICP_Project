@@ -29,7 +29,6 @@ int ThreadTrackApp::run() {
     do {
         if (endedThread) break;
 
-        deQueue.wait();
         if (!deQueue.empty()) {
             deQueue.popFront().copyTo(frame);
             cv::imshow("Scene", frame);
@@ -40,7 +39,7 @@ int ThreadTrackApp::run() {
             std::cout << "FPS main: " << FPS_main.get() << std::endl;
         FPS_main.update();
 
-    } while (cv::pollKey() != 27);
+    } while (cv::waitKey(10) != 27);
 
     endedMain = true;
 
