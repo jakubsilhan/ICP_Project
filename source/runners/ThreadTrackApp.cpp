@@ -21,16 +21,17 @@ bool ThreadTrackApp::init() {
 
 int ThreadTrackApp::run() {
     cv::Mat frame;
-    std::atomic<bool> endedMain(false);
-    std::atomic<bool> endedThread(false);
 
-    std::jthread tracker(std::bind(&ThreadTrackApp::trackerThread, this, std::ref(captureDevice), std::ref(endedMain), std::ref(endedThread)));
+    endedMain = false;
+
+    std::jthread tracker(&ThreadTrackApp::trackerThread, this);
 
     do {
         if (endedThread) break;
-        auto poppedFrameOpt = deQueue.tryPopFront();
-        if (poppedFrameOpt) {
-            poppedFrameOpt->copyTo(frame);
+
+        deQueue.wait();
+        if (!deQueue.empty()) {
+            deQueue.popFront().copyTo(frame);
             cv::imshow("Scene", frame);
         }
 
@@ -46,7 +47,7 @@ int ThreadTrackApp::run() {
     return 0;
 }
 
-void ThreadTrackApp::trackerThread(cv::VideoCapture& captureDevice, std::atomic<bool>& endedMain, std::atomic<bool>& endedThread) {
+void ThreadTrackApp::trackerThread() {
     cv::Mat frame;
 
     while(!endedMain){

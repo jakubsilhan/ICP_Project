@@ -11,11 +11,13 @@ public:
 	ThreadTrackApp();
 	bool init(void);
 	int run(void);
-	void trackerThread(cv::VideoCapture& capture, std::atomic<bool>& endedMain, std::atomic<bool>& endedThread);
+	void trackerThread();
 	~ThreadTrackApp();
 
 private:
 	SyncedDeque<cv::Mat> deQueue;
+	std::atomic<bool> endedMain = false;
+    std::atomic<bool> endedThread = false;
 	FaceRecognizer faceRecognizer;
 	RedRecognizer redRecognizer;
 	cv::VideoCapture captureDevice;
