@@ -1,9 +1,9 @@
-#include "include/runners/TrackApp.hpp"
+#include "include/runners/ThreadTrackApp.hpp"
 
 
 int main()
 {
-    TrackApp trackApp;
+    ThreadTrackApp trackApp;
 
     if (!trackApp.init()) {
         return 1;
