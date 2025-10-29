@@ -1,5 +1,6 @@
 #include "include/runners/ThreadTrackApp.hpp"
 #include "include/render/drawings.hpp"
+#include "include/render/Triangle.hpp"
 #include <thread>
 
 ThreadTrackApp::ThreadTrackApp() {
@@ -7,6 +8,7 @@ ThreadTrackApp::ThreadTrackApp() {
 }
 
 bool ThreadTrackApp::init() {
+    // Classic tracker initializations
     faceRecognizer.init();
 
     staticImage = cv::imread("resources/lock.png");
@@ -16,6 +18,25 @@ bool ThreadTrackApp::init() {
         std::cerr << "Error: Could not open camera.\n";
         return false;
     }
+
+    // GLFW initialization
+    if (!glfwInit()) {
+        std::cerr << "Error: Could not initialize GLFW.\n";
+        return false;
+    }
+    // Version specifications
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+    // Window creation
+    window = glfwCreateWindow(800, 600, "OpenGL context", NULL, NULL);
+    if (!window) {
+        std::cerr << "Error: Could not creeate GLFW window. \n";
+        glfwTerminate();
+        return false;
+    }
+
     return true;
 }
 
@@ -25,9 +46,10 @@ int ThreadTrackApp::run() {
     endedMain = false;
 
     std::jthread tracker(&ThreadTrackApp::trackerThread, this);
+    std::jthread gl(&ThreadTrackApp::glThread, this);
 
     do {
-        if (endedThread) break;
+        if (endedThread || endedGl) break;
 
         if (!deQueue.empty()) {
             deQueue.popFront().copyTo(frame);
@@ -85,6 +107,56 @@ void ThreadTrackApp::trackerThread() {
     }
 }
 
+void ThreadTrackApp::glThread() {
+    // Context must be assigned per thread (and should not be assigned in multiple ones)
+    glfwMakeContextCurrent(window);
+
+    // Requires assigned context
+    if (glewInit() != GLEW_OK) {
+        std::cerr << "Error: Could not initialize GLEW.\n";
+        endedGl = true;
+        return;
+    }
+
+    // Requires initialized glew
+    if (!GLEW_ARB_direct_state_access)
+        throw std::runtime_error("No DSA :-(");
+
+    // Set background color
+    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+
+    // Prepare triangle
+    Triangle triangle;
+    if (!triangle.init()) {
+        std::cerr << "Error: Could not initialize triangle. \n";
+        endedGl = true;
+        return;
+    }
+
+    // Set triangle color
+    triangle.setColor(1, 0, 0, 1);
+
+    while (!glfwWindowShouldClose(window) && !endedMain) {
+        glClear(GL_COLOR_BUFFER_BIT);
+        triangle.draw();
+
+        // Switch background and foreground buffers (rendering is always done in background first)
+        glfwSwapBuffers(window);
+
+        // Check key, mouse events
+        glfwPollEvents();
+
+        // Sleep to reduce CPU usage
+        std::this_thread::sleep_for(std::chrono::milliseconds(16));
+    }
+
+    endedGl = true;
+}
+
 ThreadTrackApp::~ThreadTrackApp()
 {
+    if (window) {
+        glfwDestroyWindow(window);
+        glfwTerminate();
+    }
 }

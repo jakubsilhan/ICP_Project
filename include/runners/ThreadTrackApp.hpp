@@ -6,12 +6,16 @@
 #include "include/utils/fps_meter.hpp"
 #include "include/concurrency/SyncedDeque.hpp"
 
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
+
 class ThreadTrackApp {
 public:
 	ThreadTrackApp();
 	bool init(void);
 	int run(void);
 	void trackerThread();
+	void glThread();
 	~ThreadTrackApp();
 
 private:
@@ -25,4 +29,8 @@ private:
 	cv::Mat warningImage;
 	fps_meter FPS_main;
 	fps_meter FPS_tracker;
+
+	// GL stuff
+	GLFWwindow* window = nullptr;
+	std::atomic<bool> endedGl = false;
 };
