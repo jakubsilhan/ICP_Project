@@ -1,5 +1,6 @@
 #include "include/runners/GLApp.hpp"
 #include "include/render/Triangle.hpp"
+#include "include/utils/GlErrCallback.hpp"
 
 GLApp::GLApp()
 {
@@ -31,6 +32,16 @@ bool GLApp::init() {
     if (glewInit() != GLEW_OK) {
         std::cerr << "Error: Could not initialize GLEW.\n";
         return false;
+    }
+
+    if (GLEW_ARB_debug_output) {
+        glDebugMessageCallback(MessageCallback, 0);
+        glEnable(GL_DEBUG_OUTPUT);
+
+        std::cout << "GL_DEBUG enabled" << std::endl;
+    }
+    else {
+        std::cout << "GL_DEBUG NOT SUPPORTED!" << std::endl;
     }
 
     // Requires initialized glew
