@@ -21,4 +21,8 @@ private:
 
 	// GL stuff
 	GLFWwindow* window = nullptr;
+
+	// callbacks
+	static void glfw_error_callback(int error, const char* description);
+
 };

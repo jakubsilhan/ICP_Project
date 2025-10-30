@@ -8,6 +8,7 @@ GLApp::GLApp()
 
 bool GLApp::init() {
     // GLFW initialization
+    glfwSetErrorCallback(glfw_error_callback);
     if (!glfwInit()) {
         std::cerr << "Error: Could not initialize GLFW.\n";
         return false;
@@ -82,6 +83,12 @@ bool GLApp::run() {
         std::this_thread::sleep_for(std::chrono::milliseconds(16));
     }
     return true;
+}
+
+// Callbacks
+void GLApp::glfw_error_callback(int error, const char* description)
+{
+    std::cerr << "GLFW error: " << description << std::endl;
 }
 
 GLApp::~GLApp()
