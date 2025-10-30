@@ -1,6 +1,8 @@
 # pragma once
 
 #include <gl/glew.h>
+#include <vector>
+#include <include/assets/vertex.hpp>
 
 class Triangle {
 public:
@@ -17,6 +19,13 @@ private:
 	GLint uniformColorLoc = -1; // Location of uniform_Color
 
 	// Uniform = constant variable accross a single draw call (same for all verrtices and fragents
+
+	std::vector<vertex> triangle_vertices =
+	{
+		{{0.0f,  0.5f,  0.0f}},
+		{{0.5f, -0.5f,  0.0f}},
+		{{-0.5f, -0.5f,  0.0f}}
+	};
 
 	bool compileShaders();
 

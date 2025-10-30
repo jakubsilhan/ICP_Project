@@ -2,11 +2,11 @@
 #include <iostream>
 
 // Vertex data: position(x,y,z) only; color comes from uniform
-static float triangleVertices[] = {
-     0.0f,  0.5f, 0.0f,  // top
-    -0.5f, -0.5f, 0.0f,  // bottom-left
-     0.5f, -0.5f, 0.0f   // bottom-right
-};
+//static float triangleVertices[] = {
+//     0.0f,  0.5f, 0.0f,  // top
+//    -0.5f, -0.5f, 0.0f,  // bottom-left
+//     0.5f, -0.5f, 0.0f   // bottom-right
+//};
 
 bool Triangle::init() {
     /*
@@ -26,8 +26,8 @@ bool Triangle::init() {
     // Upload vertex data to GPU using DSA
     glNamedBufferData(
         VBO,                            // Object to fill with data
-        sizeof(triangleVertices),       // Size of data
-        triangleVertices,               // Array with vertices
+        triangle_vertices.size() * sizeof(vertex),       // Size of data
+        triangle_vertices.data(),               // Array with vertices
         GL_STATIC_DRAW                  // Data will not change often, optimized for drawing
     );
 
@@ -37,23 +37,23 @@ bool Triangle::init() {
         0,                  // binding index (can have multiple vertex buffers per VAO)
         VBO,                // which VBO to attach
         0,                  // offset inside the buffer where vertex data starts
-        3 * sizeof(float)   // stride = number of bytes between consecutive vertices
+        sizeof(vertex)   // stride = number of bytes between consecutive vertices
     );
 
     // Define vertex attribute
-    glEnableVertexArrayAttrib(VAO, 0); // Enable attribute 0 (layout)
-
+    GLint position_attrib_location = glGetAttribLocation(shaderProgram, "attribute_Position");
+    glEnableVertexArrayAttrib(VAO, position_attrib_location); // Enable attribute 0 (layout)
     glVertexArrayAttribFormat(
-        VAO,                // Which VAO to configure
-        0,                  // attribute index (Location in shader)
-        3,                  // number of components (x,y,z)
-        GL_FLOAT,           // type of each component (float)
-        GL_FALSE,           // do not normalize
-        0                   // relative offset in the buffer
+        VAO,                                        // Which VAO to configure
+        position_attrib_location,                   // attribute index (Location in shader)
+        3,                                          // number of components (x,y,z)
+        GL_FLOAT,                                   // type of each component (float)
+        GL_FALSE,                                   // do not normalize
+        offsetof(vertex, position)                  // relative offset in the buffer
     );
 
     // Connect attribute 0 to binding index 0 of the VAO
-    glVertexArrayAttribBinding(VAO, 0, 0);
+    glVertexArrayAttribBinding(VAO, position_attrib_location, 0);
 
     // Gen uniform Location (color) from shader
     glUseProgram(shaderProgram); // Activate shader program for querying
@@ -72,9 +72,9 @@ bool Triangle::compileShaders() {
     // Vertex shader source code (GPU program for each vertex) - pass position for each vertex
     const char* vertexShaderSrc = R"(
         #version 460 core
-        layout(location = 0) in vec3 aPos;      
+        in vec3 attribute_Position;     
         void main() {
-            gl_Position = vec4(aPos, 1.0);      
+            gl_Position = vec4(attribute_Position, 1.0);      
         }
     )";
 
