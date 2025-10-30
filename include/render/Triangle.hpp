@@ -2,7 +2,7 @@
 
 #include <gl/glew.h>
 #include <vector>
-#include <include/assets/vertex.hpp>
+#include <include/assets/Vertex.hpp>
 
 class Triangle {
 public:
@@ -20,7 +20,7 @@ private:
 
 	// Uniform = constant variable accross a single draw call (same for all verrtices and fragents
 
-	std::vector<vertex> triangle_vertices =
+	std::vector<Vertex> triangle_vertices =
 	{
 		{{0.0f,  0.5f,  0.0f}},
 		{{0.5f, -0.5f,  0.0f}},

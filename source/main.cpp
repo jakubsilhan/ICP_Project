@@ -1,15 +1,15 @@
-#include "include/runners/ThreadTrackApp.hpp"
+#include "include/runners/GLApp.hpp"
 
 
 int main()
 {
-    ThreadTrackApp trackApp;
+    GLApp glApp;
 
-    if (!trackApp.init()) {
+    if (!glApp.init()) {
         return 1;
     };
 
-    trackApp.run();
+    glApp.run();
 
     return 0;
 }

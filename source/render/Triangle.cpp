@@ -26,7 +26,7 @@ bool Triangle::init() {
     // Upload vertex data to GPU using DSA
     glNamedBufferData(
         VBO,                            // Object to fill with data
-        triangle_vertices.size() * sizeof(vertex),       // Size of data
+        triangle_vertices.size() * sizeof(Vertex),       // Size of data
         triangle_vertices.data(),               // Array with vertices
         GL_STATIC_DRAW                  // Data will not change often, optimized for drawing
     );
@@ -37,7 +37,7 @@ bool Triangle::init() {
         0,                  // binding index (can have multiple vertex buffers per VAO)
         VBO,                // which VBO to attach
         0,                  // offset inside the buffer where vertex data starts
-        sizeof(vertex)   // stride = number of bytes between consecutive vertices
+        sizeof(Vertex)   // stride = number of bytes between consecutive vertices
     );
 
     // Define vertex attribute
@@ -49,7 +49,7 @@ bool Triangle::init() {
         3,                                          // number of components (x,y,z)
         GL_FLOAT,                                   // type of each component (float)
         GL_FALSE,                                   // do not normalize
-        offsetof(vertex, position)                  // relative offset in the buffer
+        offsetof(Vertex, position)                  // relative offset in the buffer
     );
 
     // Connect attribute 0 to binding index 0 of the VAO
