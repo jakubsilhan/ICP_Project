@@ -58,6 +58,8 @@ bool GLApp::init() {
 }
 
 bool GLApp::run() {
+    // Title string
+    std::ostringstream titleString;
 
     // Set background color
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
@@ -73,6 +75,8 @@ bool GLApp::run() {
     triangle.setColor(1, 0, 0, 1);
 
     while (!glfwWindowShouldClose(window)) {
+        titleString.str("");
+        titleString.clear();
         glClear(GL_COLOR_BUFFER_BIT);
         triangle.draw();
 
@@ -82,8 +86,15 @@ bool GLApp::run() {
         // Check key, mouse events
         glfwPollEvents();
 
+        // FPS counter
+        if (FPS_main.is_updated()) {
+            titleString << "FPS: " << FPS_main.get();
+            glfwSetWindowTitle(window, titleString.str().c_str());
+        }
+        FPS_main.update();
+
         // Sleep to reduce CPU usage
-        std::this_thread::sleep_for(std::chrono::milliseconds(16));
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
     return true;
 }
@@ -100,11 +111,14 @@ bool GLApp::init_cv() {
         std::cerr << "Error: Could not open camera.\n";
         return false;
     }
+
+    return true;
 }
 
 bool GLApp::run_cv() {
     cvdispthr = std::jthread(&GLApp::cvdisplayThread, this);
     trackthr = std::jthread(&GLApp::trackerThread, this);
+    return true;
 }
 
 void GLApp::cvdisplayThread() {
@@ -119,9 +133,9 @@ void GLApp::cvdisplayThread() {
         }
 
         // Measure and display fps
-        if (FPS_main.is_updated())
-            std::cout << "FPS main: " << FPS_main.get() << std::endl;
-        FPS_main.update();
+        if (FPS_cvdisplay.is_updated())
+            std::cout << "FPS CV display: " << FPS_main.get() << std::endl;
+        FPS_cvdisplay.update();
 
     } while (cv::waitKey(10) != 27);
 
