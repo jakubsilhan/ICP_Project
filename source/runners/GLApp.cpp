@@ -1,3 +1,5 @@
+#include <thread>
+
 #include "include/runners/GLApp.hpp"
 #include "include/render/drawings.hpp"
 #include "include/render/Triangle.hpp"
