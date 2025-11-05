@@ -1,5 +1,7 @@
 #pragma once
 
+#include <thread>
+
 #include <opencv2/opencv.hpp>
 #include "include/recognizers/FaceRecognizer.hpp"
 #include "include/recognizers/RedRecognizer.hpp"
