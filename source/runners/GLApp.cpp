@@ -3,7 +3,7 @@
 #include "include/runners/GLApp.hpp"
 #include "include/render/drawings.hpp"
 #include "include/render/Triangle.hpp"
-#include "include/utils/GlErrCallback.hpp"
+#include "include/utils/GlDebugCallback.hpp"
 
 GLApp::GLApp()
 {
