@@ -13,11 +13,30 @@ class GLApp {
 public:
 	GLApp();
 	bool init(void);
+	bool init_cv(void);
 	bool run(void);
+	bool run_cv();
 	~GLApp();
 
 private:
+	// OpenCV
+	SyncedDeque<cv::Mat> deQueue;
+	std::atomic<bool> endedMain = false;
+	std::atomic<bool> endedThread = false;
+	std::jthread cvdispthr;
+	std::jthread trackthr;
+	FaceRecognizer faceRecognizer;
+	RedRecognizer redRecognizer;
+	cv::VideoCapture captureDevice;
+	cv::Mat staticImage;
+	cv::Mat warningImage;
 	fps_meter FPS_main;
+	fps_meter FPS_cvdisplay;
+	fps_meter FPS_tracker;
+
+	void cvdisplayThread();
+	void trackerThread();
+
 
 	// GL stuff
 	GLFWwindow* window = nullptr;
