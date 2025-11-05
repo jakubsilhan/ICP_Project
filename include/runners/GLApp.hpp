@@ -8,11 +8,14 @@
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+#include <include/render/Triangle.hpp>
 
 class GLApp {
 public:
 	GLApp();
+	bool load_config(const std::string& filename);
 	bool init(void);
+	bool init_imgui(void);
 	bool init_cv(void);
 	bool run(void);
 	bool run_cv();
@@ -38,10 +41,25 @@ private:
 	void trackerThread();
 
 
-	// GL stuff
+	// OpenGL
 	GLFWwindow* window = nullptr;
+	int windowWidth = 800;
+	int windowHeight = 600;
+	bool vsync_on = true;
+
+	// Triangle
+	Triangle triangle;
+	int triangleColorIndex = 0;
+
+	// ImGUI
+	bool imgui_on = true;
 
 	// callbacks
 	static void glfw_error_callback(int error, const char* description);
+	static void glfw_framebuffer_size_callback(GLFWwindow* window, int width, int height);
+	static void glfw_mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
+	static void glfw_key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
+	static void glfw_scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
+	static void glfw_cursor_position_callback(GLFWwindow* window, double xpos, double ypos);
 
 };

@@ -11,6 +11,7 @@ find_package(glm           CONFIG REQUIRED)
 find_package(GLEW                 REQUIRED)
 find_package(glfw3         CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
+find_package(imgui CONFIG REQUIRED)
 
 if(WIN32)
     find_package(OpenCV CONFIG REQUIRED PATHS "${OPENCV_DIR}/x64/vc16/lib")
@@ -30,6 +31,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     glm::glm
     nlohmann_json::nlohmann_json
     ${OpenCV_LIBS}
+    imgui::imgui
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE
