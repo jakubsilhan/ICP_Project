@@ -1,13 +1,6 @@
 #include "include/render/Triangle.hpp"
 #include <iostream>
 
-// Vertex data: position(x,y,z) only; color comes from uniform
-//static float triangleVertices[] = {
-//     0.0f,  0.5f, 0.0f,  // top
-//    -0.5f, -0.5f, 0.0f,  // bottom-left
-//     0.5f, -0.5f, 0.0f   // bottom-right
-//};
-
 bool Triangle::init() {
     /*
     Initializing values for rendering
