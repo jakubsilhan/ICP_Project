@@ -23,7 +23,7 @@ ShaderProgram::ShaderProgram(const std::string & vertex_shader_code, const std::
 }
 
 ShaderProgram::ShaderProgram(const std::filesystem::path & VS_file, const std::filesystem::path & FS_file) :
-    ShaderProgram{read_text_file(VS_file), read_text_file(FS_file)} {}
+    ShaderProgram{textFileRead(VS_file), textFileRead(FS_file)} {}
 
 // Get location or write error to console
 GLuint ShaderProgram::getUniformLocation(const std::string & name) {
@@ -45,8 +45,8 @@ GLuint ShaderProgram::getUniformLocation(const std::string & name) {
 }
 
 GLint ShaderProgram::getAttribLocation(const std::string & name) {
-    GLint loc = glGetAttribLocation(ID, name);
-    if (loc == -1) {
+    GLint loc = glGetAttribLocation(ID, name.c_str());
+    if (loc == -1)
         std::cerr << "No vertex attribute with name: " << name << ", or reserved name (starting with gl_)\n";
     return loc;
 }
@@ -68,7 +68,7 @@ void ShaderProgram::setUniform(const std::string& name, const glm::vec3 & val) {
 	glProgramUniform3fv(ID, loc, 1, glm::value_ptr(val));
 }
 
-void ShaderProgram::setUniform(const std::string& name, const glm::vec4 & in_vec4) {
+void ShaderProgram::setUniform(const std::string& name, const glm::vec4 & val) {
     auto loc = getUniformLocation(name);
     glProgramUniform4fv(ID, loc, 1, glm::value_ptr(val));
 }

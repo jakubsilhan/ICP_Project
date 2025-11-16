@@ -7,8 +7,8 @@
 #include <glm/glm.hpp> 
 #include <glm/ext.hpp>
 
-#include "assets.hpp"
-#include "non_copyable.hpp"
+#include "assets/Vertex.hpp"
+#include "utils/NonCopyable.hpp"
 
 class Mesh : private NonCopyable
 {
@@ -37,7 +37,7 @@ public:
         glVertexArrayAttribBinding(vao_, attribute_location_normal, 0);
         glEnableVertexArrayAttrib(vao_, attribute_location_normal);
 
-        glVertexArrayAttribFormat(vao_, attribute_location_texture_coords, glm::vec2::length(), GL_FLOAT, GL_FALSE, offsetof(Vertex, texture_coords));
+        glVertexArrayAttribFormat(vao_, attribute_location_texture_coords, glm::vec2::length(), GL_FLOAT, GL_FALSE, offsetof(Vertex, texCoords));
         glVertexArrayAttribBinding(vao_, attribute_location_texture_coords, 0);
         glEnableVertexArrayAttrib(vao_, attribute_location_texture_coords);
 

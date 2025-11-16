@@ -3,11 +3,12 @@
 #include <string>
 #include <filesystem>
 #include <unordered_map>
+#include <vector>
 
 #include <GL/glew.h> 
 #include <glm/glm.hpp>
 
-#include "non_copyable.hpp"
+#include "utils/NonCopyable.hpp"
 
 class ShaderProgram : private NonCopyable {
 public:
@@ -34,7 +35,7 @@ public:
     // deactivate current shader program (i.e. activate shader no. 0)
     void deactivate(void) { 
         glUseProgram(0); 
-        currently_used = 0; 
+        currently_used_ID = 0; 
     };   
 
     ~ShaderProgram(void) {  //deallocate shader program
@@ -61,7 +62,7 @@ public:
 
 private:
     GLuint ID{0}; // default = 0, empty shader
-    inline static GLuint currently_used{0};
+    inline static GLuint currently_used_ID{0};
     std::unordered_map<std::string, GLuint> uniform_location_cache;
 
     GLuint getUniformLocation(const std::string & name);
