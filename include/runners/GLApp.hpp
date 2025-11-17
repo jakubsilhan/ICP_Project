@@ -25,7 +25,12 @@ public:
 
 private:
 	// OpenCV
-	SyncedDeque<cv::Mat> deQueue;
+	typedef struct RecognizedData {
+		cv::Mat frame;
+		std::vector<cv::Point2f> faces;
+		cv::Point2f red;
+	} RecognizedData;
+	SyncedDeque<RecognizedData> deQueue;
 	std::atomic<bool> endedMain = false;
 	std::atomic<bool> endedThread = false;
 	std::jthread cvdispthr;
