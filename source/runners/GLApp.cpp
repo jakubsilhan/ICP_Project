@@ -227,14 +227,34 @@ bool GLApp::run_cv() {
 }
 
 void GLApp::cvdisplayThread() {
+    RecognizedData data;
     cv::Mat frame;
 
     do {
         if (endedThread) break;
 
         if (!deQueue.empty()) {
-            deQueue.popFront().copyTo(frame);
-            cv::imshow("Scene", frame);
+            data = deQueue.popFront();
+            data.frame.copyTo(frame);
+
+            // Display logic
+            switch (data.faces.size()) {
+            // 1. No face -> static image
+            case 0:
+                cv::imshow("Scene", staticImage);
+                break;
+
+            // 2. One face -> track "some" object (track red)
+            case 1:
+                draw_cross_normalized(frame, data.faces.front(), 30, CV_RGB(0, 255, 0));
+                draw_cross_normalized(frame, data.red, 30);
+                cv::imshow("Scene", frame);
+                break;
+
+            // 3. More than one face -> display warning
+            default:
+                cv::imshow("Scene", warningImage);
+            }
         }
 
         // Measure and display fps
@@ -258,27 +278,11 @@ void GLApp::trackerThread() {
             return;
         }
 
-        // find face
-        std::vector<cv::Point2f> centers = faceRecognizer.find_face(frame);
-
-        // Display logic
-        switch (centers.size()) {
-            // 1. No face -> static image
-        case 0:
-            deQueue.pushBack(staticImage);
-            break;
-
-            // 2. One face -> track "some" object (track red)
-        case 1:
-            draw_cross_normalized(frame, centers.front(), 30, CV_RGB(0, 255, 0));
-            draw_cross_normalized(frame, redRecognizer.find_red(frame), 30);
-            deQueue.pushBack(frame);
-            break;
-
-            // 3. More than one face -> display warning
-        default:
-            deQueue.pushBack(warningImage);
-        }
+        deQueue.pushBack(RecognizedData{
+            frame,
+            faceRecognizer.find_face(frame),
+            redRecognizer.find_red(frame)
+        });
 
         if (FPS_tracker.is_updated())
             std::cout << "FPS tracker: " << FPS_tracker.get() << std::endl;
