@@ -86,19 +86,19 @@ void ThreadTrackApp::trackerThread() {
         switch (centers.size()) {
             // 1. No face -> static image
         case 0:
-            deQueue.pushBack(staticImage);
+            deQueue.pushBack(std::move(staticImage));
             break;
 
             // 2. One face -> track "some" object (track red)
         case 1:
             draw_cross_normalized(frame, centers.front(), 30, CV_RGB(0, 255, 0));
             draw_cross_normalized(frame, redRecognizer.find_red(frame), 30);
-            deQueue.pushBack(frame);
+            deQueue.pushBack(std::move(frame));
             break;
 
             // 3. More than one face -> display warning
         default:
-            deQueue.pushBack(warningImage);
+            deQueue.pushBack(std::move(warningImage));
         }
 
         if (FPS_tracker.is_updated())
