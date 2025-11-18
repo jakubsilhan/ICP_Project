@@ -228,14 +228,12 @@ bool GLApp::run_cv() {
 
 void GLApp::cvdisplayThread() {
     RecognizedData data;
-    cv::Mat frame;
 
     do {
         if (endedThread) break;
 
         if (!deQueue.empty()) {
             data = deQueue.popFront();
-            data.frame.copyTo(frame);
 
             // Display logic
             switch (data.faces.size()) {
@@ -246,15 +244,17 @@ void GLApp::cvdisplayThread() {
 
             // 2. One face -> track "some" object (track red)
             case 1:
-                draw_cross_normalized(frame, data.faces.front(), 30, CV_RGB(0, 255, 0));
-                draw_cross_normalized(frame, data.red, 30);
-                cv::imshow("Scene", frame);
+                draw_cross_normalized(*data.frame, data.faces.front(), 30, CV_RGB(0, 255, 0));
+                draw_cross_normalized(*data.frame, data.red, 30);
+                cv::imshow("Scene", *data.frame);
                 break;
 
             // 3. More than one face -> display warning
             default:
                 cv::imshow("Scene", warningImage);
             }
+
+            framePool.release(std::move(data.frame));
         }
 
         // Measure and display fps
@@ -268,20 +268,26 @@ void GLApp::cvdisplayThread() {
 }
 
 void GLApp::trackerThread() {
-    cv::Mat frame;
+    std::unique_ptr<cv::Mat> frame;
+    std::vector<cv::Point2f> faces;
+    cv::Point2f red;
 
     while (!endedMain && !endedThread) {
-        captureDevice.read(frame);
-        if (frame.empty()) {
+        frame = framePool.acquire();
+        captureDevice.read(*frame);
+        if (frame->empty()) {
             std::cerr << "Cam disconnected? End of video?" << std::endl;
             endedThread = true;
             return;
         }
 
+        faces = faceRecognizer.find_face(*frame);
+        red = redRecognizer.find_red(*frame);
+
         deQueue.pushBack(RecognizedData{
-            frame,
-            faceRecognizer.find_face(frame),
-            redRecognizer.find_red(frame)
+            std::move(frame),
+            faces,
+            red
         });
 
         if (FPS_tracker.is_updated())

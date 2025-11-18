@@ -7,6 +7,7 @@
 #include "include/recognizers/RedRecognizer.hpp"
 #include "include/utils/fps_meter.hpp"
 #include "include/concurrency/SyncedDeque.hpp"
+#include "include/concurrency/Pool.hpp"
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -26,11 +27,12 @@ public:
 private:
 	// OpenCV
 	typedef struct RecognizedData {
-		cv::Mat frame;
+		std::unique_ptr<cv::Mat> frame;
 		std::vector<cv::Point2f> faces;
 		cv::Point2f red;
 	} RecognizedData;
 	SyncedDeque<RecognizedData> deQueue;
+	Pool<cv::Mat> framePool;
 	std::atomic<bool> endedMain = false;
 	std::atomic<bool> endedThread = false;
 	std::jthread cvdispthr;

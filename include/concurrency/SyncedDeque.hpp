@@ -1,3 +1,5 @@
+#pragma once
+
 #include <deque>
 #include <mutex>
 #include <condition_variable>
@@ -91,3 +93,6 @@ public:
 	}
 
 };
+
+template <typename T> 
+using UniquePtrSyncedDeque = SyncedDeque<std::unique_ptr<T>>;
