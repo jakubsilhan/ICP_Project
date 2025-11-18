@@ -55,7 +55,7 @@ public:
 
 	void pushBack(T&& item) {
 		std::scoped_lock lock(mux);
-		de_queue.emplace_back(item);
+		de_queue.emplace_back(std::move(item));
 
 		std::unique_lock<std::mutex> ul(mux_sleep);
 		cv_sleep.notify_one();
@@ -63,7 +63,7 @@ public:
 
 	void pushFront(T&& item) {
 		std::scoped_lock lock(mux);
-		de_queue.emplace_front(item);
+		de_queue.emplace_front(std::move(item));
 
 		std::unique_lock<std::mutex> ul(mux_sleep);
 		cv_sleep.notify_one();
