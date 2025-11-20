@@ -310,6 +310,31 @@ void GLApp::glfw_framebuffer_size_callback(GLFWwindow* window, int width, int he
 
 void GLApp::glfw_mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 {
+    if (action == GLFW_PRESS) {
+        ImGuiIO& io = ImGui::GetIO();
+        if (!io.WantCaptureMouse) {
+            switch (button) {
+            case GLFW_MOUSE_BUTTON_LEFT: {
+                int mode = glfwGetInputMode(window, GLFW_CURSOR);
+                if (mode == GLFW_CURSOR_NORMAL) {
+                    // we are outside of application, catch the cursor
+                    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+                }
+                else {
+                    // we are already inside our game: shoot, click, etc.
+                    std::cout << "Bang!\n";
+                }
+                break;
+            }
+            case GLFW_MOUSE_BUTTON_RIGHT:
+                // release the cursor
+                glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+                break;
+            default:
+                break;
+            }
+        }
+	}
 }
 
 void GLApp::glfw_key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
