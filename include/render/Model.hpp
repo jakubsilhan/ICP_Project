@@ -10,6 +10,7 @@
 
 #include "assets/Mesh.hpp"
 #include "utils/ShaderProgram.hpp"
+#include "utils/OBJloader.hpp"
 
 class Model {
 public:
@@ -38,6 +39,12 @@ public:
         // This can be done by extending OBJ file parser (OBJ can load hierarchical models),
         // or by your own JSON model specification (or keep it simple and set a rule: 1model=1mesh ...) 
         //
+
+        std::vector<Vertex> vertices;
+        std::vector<GLuint> indices;
+        loadOBJ(filename, vertices, indices);
+
+        addMesh(std::make_shared<Mesh>(vertices, indices, GL_TRIANGLE_STRIP), shader);
     }
 
     void addMesh(std::shared_ptr<Mesh> mesh,

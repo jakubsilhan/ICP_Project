@@ -11,7 +11,7 @@
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-#include <include/render/Triangle.hpp>
+#include "render/Triangle.hpp"
 
 class GLApp {
 public:
@@ -55,9 +55,10 @@ private:
 	int windowWidth = 800;
 	int windowHeight = 600;
 	bool vsync_on = true;
+	std::shared_ptr<ShaderProgram> shader;
 
 	// Triangle
-	Triangle triangle;
+	std::shared_ptr<Triangle> triangle;
 	int triangleColorIndex = 0;
 
 	// ImGUI

@@ -1,6 +1,6 @@
 #include "include/runners/ThreadTrackApp.hpp"
 #include "include/render/drawings.hpp"
-#include "include/render/Triangle.hpp"
+#include "include/render/TriangleOld.hpp"
 #include <thread>
 
 ThreadTrackApp::ThreadTrackApp() {
@@ -126,7 +126,7 @@ void ThreadTrackApp::glThread() {
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
     // Prepare triangle
-    Triangle triangle;
+    TriangleOld triangle;
     if (!triangle.init()) {
         std::cerr << "Error: Could not initialize triangle. \n";
         endedGl = true;

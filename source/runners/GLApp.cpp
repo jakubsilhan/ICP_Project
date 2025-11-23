@@ -2,7 +2,7 @@
 
 #include "include/runners/GLApp.hpp"
 #include "include/render/drawings.hpp"
-#include "include/render/Triangle.hpp"
+#include "include/render/TriangleOld.hpp"
 #include "include/utils/GlDebugCallback.hpp"
 
 #include <fstream>
@@ -108,6 +108,12 @@ bool GLApp::init() {
         return false;
     }
 
+    // Init shader
+    shader = std::make_shared<ShaderProgram>(std::filesystem::path("resources/basic_sdr/basic.vert"), std::filesystem::path("resources/basic_sdr/basic.frag"));
+
+    // Prepare triangle
+    triangle = std::make_shared<Triangle>(shader);
+
     return true;
 }
 
@@ -136,13 +142,6 @@ bool GLApp::run() {
     // Set background color
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
-    // Prepare triangle
-    if (!triangle.init()) {
-        std::cerr << "Error: Could not initialize triangle. \n";
-        return false;
-    }
-
-
     while (!glfwWindowShouldClose(window)) {
         // Reinitializations
         titleString.str("");
@@ -168,14 +167,14 @@ bool GLApp::run() {
 
         // Set triangle color
         switch (triangleColorIndex) {
-            case 0: triangle.setColor(1.0f, 0.0f, 0.0f, 1.0f); break; // red
-            case 1: triangle.setColor(0.0f, 1.0f, 0.0f, 1.0f); break; // green
-            case 2: triangle.setColor(0.0f, 0.0f, 1.0f, 1.0f); break; // blue
+            case 0: triangle->setColor(1.0f, 0.0f, 0.0f, 1.0f); break; // red
+            case 1: triangle->setColor(0.0f, 1.0f, 0.0f, 1.0f); break; // green
+            case 2: triangle->setColor(0.0f, 0.0f, 1.0f, 1.0f); break; // blue
         }
 
         // drawing
         glClear(GL_COLOR_BUFFER_BIT);
-        triangle.draw();
+        triangle->draw();
 
         // display imgui
         if (imgui_on) {
