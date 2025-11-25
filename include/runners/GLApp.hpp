@@ -55,11 +55,13 @@ private:
 	int windowWidth = 800;
 	int windowHeight = 600;
 	bool vsync_on = true;
-	std::shared_ptr<ShaderProgram> shader;
 
-	// Triangle
-	std::shared_ptr<Triangle> triangle;
+	// Models
+	std::unordered_map<std::string, std::shared_ptr<ShaderProgram>> shader_library;
+	std::unordered_map<std::string, std::shared_ptr<Mesh>> mesh_library;
+	std::unordered_map<std::string, Model> scene;
 	int triangleColorIndex = 0;
+	void init_assets(void);
 
 	// ImGUI
 	bool imgui_on = true;

@@ -2,7 +2,6 @@
 
 #include "include/runners/GLApp.hpp"
 #include "include/render/drawings.hpp"
-#include "include/render/TriangleOld.hpp"
 #include "include/utils/GlDebugCallback.hpp"
 
 #include <fstream>
@@ -108,11 +107,8 @@ bool GLApp::init() {
         return false;
     }
 
-    // Init shader
-    shader = std::make_shared<ShaderProgram>(std::filesystem::path("resources/basic_sdr/basic.vert"), std::filesystem::path("resources/basic_sdr/basic.frag"));
-
-    // Prepare triangle
-    triangle = std::make_shared<Triangle>(shader);
+    // Init assets
+    init_assets();
 
     return true;
 }
@@ -135,12 +131,24 @@ bool GLApp::init_imgui()
     return true;
 }
 
+void GLApp::init_assets() {
+    shader_library.emplace("simple_shader", std::make_shared<ShaderProgram>(std::filesystem::path("resources/basic_sdr/basic.vert"), std::filesystem::path("resources/basic_sdr/basic.frag")));
+
+    Model triangle_model = Model("resources/triangle.obj", shader_library.at("simple_shader"));
+    scene.emplace("triangle_object", std::move(triangle_model));
+}
+
 bool GLApp::run() {
     // Title string
     std::ostringstream titleString;
+    glm::vec4 shader_color;
 
     // Set background color
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+
+    // set shader
+    auto current_shader = shader_library.at("simple_shader");
+    current_shader->setUniform(std::string("useUniformColor"), true);
 
     while (!glfwWindowShouldClose(window)) {
         // Reinitializations
@@ -167,14 +175,18 @@ bool GLApp::run() {
 
         // Set triangle color
         switch (triangleColorIndex) {
-            case 0: triangle->setColor(1.0f, 0.0f, 0.0f, 1.0f); break; // red
-            case 1: triangle->setColor(0.0f, 1.0f, 0.0f, 1.0f); break; // green
-            case 2: triangle->setColor(0.0f, 0.0f, 1.0f, 1.0f); break; // blue
+            case 0: shader_color = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f); break; // red
+            case 1: shader_color = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f); break; // green
+            case 2: shader_color = glm::vec4(0.0f, 0.0f, 1.0f, 1.0f); break; // blue
         }
+
+        current_shader->setUniform("uniformColor", shader_color);
 
         // drawing
         glClear(GL_COLOR_BUFFER_BIT);
-        triangle->draw();
+        for (auto& [name, model] : scene) {
+            model.draw();
+        }
 
         // display imgui
         if (imgui_on) {
