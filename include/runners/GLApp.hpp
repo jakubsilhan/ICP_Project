@@ -63,6 +63,12 @@ private:
 	int triangleColorIndex = 0;
 	void init_assets(void);
 
+	// Projection
+	int width{ 0 }, height{ 0 };
+	float fov = 60.0f;
+	glm::mat4 projection_matrix = glm::identity<glm::mat4>(); // store projection matrix here, update only on callbacks
+	void update_projection_matrix(void);
+
 	// ImGUI
 	bool imgui_on = true;
 

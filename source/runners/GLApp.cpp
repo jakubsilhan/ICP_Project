@@ -143,12 +143,16 @@ bool GLApp::run() {
     std::ostringstream titleString;
     glm::vec4 shader_color;
 
+    // first update = manual (no event for update arrived yet)
+    glfwGetFramebufferSize(window, &width, &height);
+    update_projection_matrix();
+    glViewport(0, 0, width, height);
+
     // Set background color
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
     // set shader
     auto current_shader = shader_library.at("simple_shader");
-    current_shader->setUniform(std::string("useUniformColor"), true);
 
     while (!glfwWindowShouldClose(window)) {
         // Reinitializations
@@ -173,7 +177,7 @@ bool GLApp::run() {
             ImGui::End();
         }
 
-        // Set triangle color
+        // Set color
         switch (triangleColorIndex) {
             case 0: shader_color = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f); break; // red
             case 1: shader_color = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f); break; // green
@@ -184,6 +188,17 @@ bool GLApp::run() {
 
         // drawing
         glClear(GL_COLOR_BUFFER_BIT);
+
+        //set View matrix = set CAMERA
+        glm::mat4 v_m = glm::lookAt(
+            glm::vec3(0, 0, 10), // position of camera
+            glm::vec3(0, 0, 0),    // where to look
+            glm::vec3(0, 1, 0)     // up direction
+        );
+
+        current_shader->setUniform("uV_m", v_m);
+        current_shader->setUniform("uP_m", projection_matrix);
+
         for (auto& [name, model] : scene) {
             model.draw();
         }
@@ -317,6 +332,15 @@ void GLApp::glfw_error_callback(int error, const char* description)
 
 void GLApp::glfw_framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
+    auto this_inst = static_cast<GLApp*>(glfwGetWindowUserPointer(window));
+    this_inst->width = width;
+    this_inst->height = height;
+
+    // set viewport
+    glViewport(0, 0, width, height);
+    //now your canvas has [0,0] in bottom left corner, and its size is [width x height] 
+
+    this_inst->update_projection_matrix();
 }
 
 void GLApp::glfw_mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
@@ -379,9 +403,11 @@ void GLApp::glfw_key_callback(GLFWwindow* window, int key, int scancode, int act
 
 void GLApp::glfw_scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
-    if (yoffset > 0.0) {
-        std::cout << "wheel up...\n";
-    }
+    auto this_inst = static_cast<GLApp*>(glfwGetWindowUserPointer(window));
+    this_inst->fov -= 10 * yoffset; // yoffset is mostly +1 or -1; one degree difference in fov is not visible
+    this_inst->fov = std::clamp(this_inst->fov, 20.0f, 170.0f); // limit FOV to reasonable values...
+
+    this_inst->update_projection_matrix();
 }
 
 void GLApp::glfw_cursor_position_callback(GLFWwindow* window, double xpos, double ypos)
@@ -389,6 +415,23 @@ void GLApp::glfw_cursor_position_callback(GLFWwindow* window, double xpos, doubl
 }
 
 
+#pragma endregion
+
+#pragma region Transformation
+void GLApp::update_projection_matrix(void)
+{
+    if (height < 1)
+        height = 1;   // avoid division by 0
+
+    float ratio = static_cast<float>(width) / height;
+
+    projection_matrix = glm::perspective(
+        glm::radians(fov),   // The vertical Field of View, in radians: the amount of "zoom". Think "camera lens". Usually between 90° (extra wide) and 30° (quite zoomed in)
+        ratio,               // Aspect Ratio. Depends on the size of your window.
+        0.1f,                // Near clipping plane. Keep as big as possible, or you'll get precision issues.
+        20000.0f             // Far clipping plane. Keep as little as possible.
+    );
+}
 #pragma endregion
 
 GLApp::~GLApp()
