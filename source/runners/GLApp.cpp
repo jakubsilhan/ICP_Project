@@ -143,10 +143,17 @@ bool GLApp::run() {
     std::ostringstream titleString;
     glm::vec4 shader_color;
 
+    // Culling
+    glCullFace(GL_BACK);
+    glEnable(GL_CULL_FACE);
+
     // first update = manual (no event for update arrived yet)
     glfwGetFramebufferSize(window, &width, &height);
     update_projection_matrix();
     glViewport(0, 0, width, height);
+
+    camera.Position = glm::vec3(0, 0, 10);
+    float last_frame_time = glfwGetTime();
 
     // Set background color
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
@@ -173,7 +180,8 @@ bool GLApp::run() {
             ImGui::Text("Controls:");
             ImGui::Text("C - switch color");
             ImGui::Text("V - VSync on/off");
-            ImGui::Text("D - show/hide info");
+            ImGui::Text("U - show/hide info");
+            ImGui::Text("X - Reset camera");
             ImGui::End();
         }
 
@@ -189,14 +197,13 @@ bool GLApp::run() {
         // drawing
         glClear(GL_COLOR_BUFFER_BIT);
 
-        //set View matrix = set CAMERA
-        glm::mat4 v_m = glm::lookAt(
-            glm::vec3(0, 0, 10), // position of camera
-            glm::vec3(0, 0, 0),    // where to look
-            glm::vec3(0, 1, 0)     // up direction
-        );
+        // React to user
+        float current_frame_time = glfwGetTime();   // current time in seconds
+        float delta_time = current_frame_time - last_frame_time; // lastFrame stored from previous frame
+        last_frame_time = current_frame_time;
+        camera.ProcessInput(window, delta_time); // process keys etc.
 
-        current_shader->setUniform("uV_m", v_m);
+        current_shader->setUniform("uV_m", camera.GetViewMatrix());
         current_shader->setUniform("uP_m", projection_matrix);
 
         for (auto& [name, model] : scene) {
@@ -345,6 +352,7 @@ void GLApp::glfw_framebuffer_size_callback(GLFWwindow* window, int width, int he
 
 void GLApp::glfw_mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 {
+    auto this_inst = static_cast<GLApp*>(glfwGetWindowUserPointer(window));
     if (action == GLFW_PRESS) {
         ImGuiIO& io = ImGui::GetIO();
         if (!io.WantCaptureMouse) {
@@ -354,6 +362,7 @@ void GLApp::glfw_mouse_button_callback(GLFWwindow* window, int button, int actio
                 if (mode == GLFW_CURSOR_NORMAL) {
                     // we are outside of application, catch the cursor
                     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+                    glfwGetCursorPos(window, &this_inst->cursorLastX, &this_inst->cursorLastY);
                 }
                 else {
                     // we are already inside our game: shoot, click, etc.
@@ -391,9 +400,13 @@ void GLApp::glfw_key_callback(GLFWwindow* window, int key, int scancode, int act
             // Cycle color index
             this_inst->triangleColorIndex = (this_inst->triangleColorIndex + 1) % 3;
             break;
-        case GLFW_KEY_D:
+        case GLFW_KEY_U:
             this_inst->imgui_on = !this_inst->imgui_on;
             std::cout << "ImGUI: " << this_inst->imgui_on << "\n";
+            break;
+        case GLFW_KEY_X:
+            this_inst->camera.Reset(glm::vec3(0, 0, 10));
+            std::cout << "Camera reset!" << "\n";
             break;
         default:
             break;
@@ -405,13 +418,23 @@ void GLApp::glfw_scroll_callback(GLFWwindow* window, double xoffset, double yoff
 {
     auto this_inst = static_cast<GLApp*>(glfwGetWindowUserPointer(window));
     this_inst->fov -= 10 * yoffset; // yoffset is mostly +1 or -1; one degree difference in fov is not visible
-    this_inst->fov = std::clamp(this_inst->fov, 20.0f, 170.0f); // limit FOV to reasonable values...
+    this_inst->fov = std::clamp(this_inst->fov, 10.0f, 170.0f); // limit FOV to reasonable values...
 
     this_inst->update_projection_matrix();
 }
 
 void GLApp::glfw_cursor_position_callback(GLFWwindow* window, double xpos, double ypos)
 {
+    auto app = static_cast<GLApp*>(glfwGetWindowUserPointer(window));
+
+    if (glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED) {
+        app->camera.ProcessMouseMovement(
+            xpos - app->cursorLastX,
+            (ypos - app->cursorLastY) * -1.0
+        );
+    }
+    app->cursorLastX = xpos;
+    app->cursorLastY = ypos;
 }
 
 

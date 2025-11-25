@@ -11,7 +11,10 @@
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-#include "render/Triangle.hpp"
+#include <include/utils/ShaderProgram.hpp>
+#include <include/assets/Mesh.hpp>
+#include <include/render/Model.hpp>
+#include <include/utils/Camera.hpp>
 
 class GLApp {
 public:
@@ -68,6 +71,12 @@ private:
 	float fov = 60.0f;
 	glm::mat4 projection_matrix = glm::identity<glm::mat4>(); // store projection matrix here, update only on callbacks
 	void update_projection_matrix(void);
+
+	// Camera
+	Camera camera;
+	double cursorLastX{ 0 };
+	double cursorLastY{ 0 };
+
 
 	// ImGUI
 	bool imgui_on = true;
