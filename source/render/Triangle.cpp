@@ -1,7 +1,7 @@
 #include "render/Triangle.hpp"
 #include "render/Model.hpp"
 
-#define TRIANGLE_OBJ_PATH "resources/triangle.obj"
+#define TRIANGLE_OBJ_PATH "resources/meshes/triangle.obj"
 
 Triangle::Triangle(std::shared_ptr<ShaderProgram> shader) :
     Model{std::filesystem::path(TRIANGLE_OBJ_PATH), shader}, shader{shader} {}

@@ -1,6 +1,7 @@
 #pragma once
 #include <cstdarg>
 
+#if !defined(_WIN32)
 void fopen_s(FILE** file, const char* name, const char* mode) {
      *file = std::fopen(name, mode);
 }
@@ -12,3 +13,4 @@ int fscanf_s(FILE* stream, const char* format, ...) {
      va_end(args);
      return ret;
 }
+#endif

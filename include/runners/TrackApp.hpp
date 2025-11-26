@@ -3,7 +3,7 @@
 #include <opencv2/opencv.hpp>
 #include "include/recognizers/FaceRecognizer.hpp"
 #include "include/recognizers/RedRecognizer.hpp"
-#include "include/utils/fps_meter.hpp"
+#include "include/utils/FpsMeter.hpp"
 
 class TrackApp {
 public:
@@ -18,5 +18,5 @@ private:
 	cv::VideoCapture captureDevice;
 	cv::Mat staticImage;
 	cv::Mat warningImage;
-	fps_meter FPS;
+	FpsMeter FPS;
 };

@@ -5,13 +5,14 @@
 #include <opencv2/opencv.hpp>
 #include "include/recognizers/FaceRecognizer.hpp"
 #include "include/recognizers/RedRecognizer.hpp"
-#include "include/utils/fps_meter.hpp"
+#include "include/utils/FpsMeter.hpp"
 #include "include/concurrency/SyncedDeque.hpp"
 #include "include/concurrency/Pool.hpp"
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-#include "render/Triangle.hpp"
+#include <scenes/IScene.hpp>
+#include <scenes/ViewerScene.hpp>
 
 class GLApp {
 public:
@@ -42,9 +43,9 @@ private:
 	cv::VideoCapture captureDevice;
 	cv::Mat staticImage;
 	cv::Mat warningImage;
-	fps_meter FPS_main;
-	fps_meter FPS_cvdisplay;
-	fps_meter FPS_tracker;
+	FpsMeter FPS_main;
+	FpsMeter FPS_cvdisplay;
+	FpsMeter FPS_tracker;
 
 	void cvdisplayThread();
 	void trackerThread();
@@ -55,11 +56,11 @@ private:
 	int windowWidth = 800;
 	int windowHeight = 600;
 	bool vsync_on = true;
-	std::shared_ptr<ShaderProgram> shader;
+	bool first_focused = false;
 
-	// Triangle
-	std::shared_ptr<Triangle> triangle;
-	int triangleColorIndex = 0;
+	// Models
+	std::unique_ptr<ViewerScene> activeScene;
+
 
 	// ImGUI
 	bool imgui_on = true;

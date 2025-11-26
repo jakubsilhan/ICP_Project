@@ -1,8 +1,7 @@
 #include <thread>
 
 #include "include/runners/GLApp.hpp"
-#include "include/render/drawings.hpp"
-#include "include/render/TriangleOld.hpp"
+#include "include/render/Drawings.hpp"
 #include "include/utils/GlDebugCallback.hpp"
 
 #include <fstream>
@@ -108,11 +107,8 @@ bool GLApp::init() {
         return false;
     }
 
-    // Init shader
-    shader = std::make_shared<ShaderProgram>(std::filesystem::path("resources/basic_sdr/basic.vert"), std::filesystem::path("resources/basic_sdr/basic.frag"));
-
-    // Prepare triangle
-    triangle = std::make_shared<Triangle>(shader);
+    // Init scene
+    activeScene = std::make_unique<ViewerScene>(windowWidth, windowHeight);
 
     return true;
 }
@@ -138,6 +134,13 @@ bool GLApp::init_imgui()
 bool GLApp::run() {
     // Title string
     std::ostringstream titleString;
+    glm::vec4 shader_color;
+
+    // Culling
+    glCullFace(GL_BACK);
+    glEnable(GL_CULL_FACE);
+
+    float last_frame_time = glfwGetTime();
 
     // Set background color
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
@@ -153,28 +156,40 @@ bool GLApp::run() {
             ImGui_ImplGlfw_NewFrame();
             ImGui::NewFrame();
             ImGui::SetNextWindowPos(ImVec2(10, 10));
-            ImGui::SetNextWindowSize(ImVec2(250, 200));
+            ImGui::SetNextWindowSize(ImVec2(250, 270));
 
             ImGui::Begin("Info", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
             ImGui::Text("V-Sync: %s", vsync_on ? "ON" : "OFF");
             ImGui::Text("FPS: %.1f", FPS_main.get());
             ImGui::Text("Controls:");
-            ImGui::Text("C - switch color");
             ImGui::Text("V - VSync on/off");
-            ImGui::Text("D - show/hide info");
-            ImGui::End();
-        }
+            ImGui::Text("U - show/hide info");
+            ImGui::Text("X - Reset camera");
+            ImGui::Text("E - switch color");
+            ImGui::Text("Q - switch model");
+            ImGui::Text("Scroll - scale model");
 
-        // Set triangle color
-        switch (triangleColorIndex) {
-            case 0: triangle->setColor(1.0f, 0.0f, 0.0f, 1.0f); break; // red
-            case 1: triangle->setColor(0.0f, 1.0f, 0.0f, 1.0f); break; // green
-            case 2: triangle->setColor(0.0f, 0.0f, 1.0f, 1.0f); break; // blue
+            ImGui::Text("Movement:");
+            ImGui::Text("Enter Movement Mode - Left Click");
+            ImGui::Text("Exit Movement Mode - Right Click");
+            ImGui::Text("Movement - WASD + Space + C");
+            ImGui::Text("Speed Boost - Left Shift");
+            ImGui::End();
         }
 
         // drawing
         glClear(GL_COLOR_BUFFER_BIT);
-        triangle->draw();
+
+        // React to user
+        float current_frame_time = glfwGetTime();   // current time in seconds
+        float delta_time = current_frame_time - last_frame_time; // lastFrame stored from previous frame
+        last_frame_time = current_frame_time;
+        if (glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED) {
+            activeScene->process_input(window, delta_time);
+        }
+
+        // Render scene
+        activeScene->render();
 
         // display imgui
         if (imgui_on) {
@@ -305,10 +320,16 @@ void GLApp::glfw_error_callback(int error, const char* description)
 
 void GLApp::glfw_framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
+    auto this_inst = static_cast<GLApp*>(glfwGetWindowUserPointer(window));
+    this_inst->activeScene->on_resize(width, height);
+
+    // set viewport
+    glViewport(0, 0, width, height);
 }
 
 void GLApp::glfw_mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 {
+    auto this_inst = static_cast<GLApp*>(glfwGetWindowUserPointer(window));
     if (action == GLFW_PRESS) {
         ImGuiIO& io = ImGui::GetIO();
         if (!io.WantCaptureMouse) {
@@ -318,6 +339,8 @@ void GLApp::glfw_mouse_button_callback(GLFWwindow* window, int button, int actio
                 if (mode == GLFW_CURSOR_NORMAL) {
                     // we are outside of application, catch the cursor
                     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+                    auto [lx, ly] = this_inst->activeScene->get_last_cursor();
+                    glfwSetCursorPos(window, lx, ly);
                 }
                 else {
                     // we are already inside our game: shoot, click, etc.
@@ -351,15 +374,12 @@ void GLApp::glfw_key_callback(GLFWwindow* window, int key, int scancode, int act
             glfwSwapInterval(this_inst->vsync_on);
             std::cout << "VSync: " << this_inst->vsync_on << "\n";
             break;
-        case GLFW_KEY_C:
-            // Cycle color index
-            this_inst->triangleColorIndex = (this_inst->triangleColorIndex + 1) % 3;
-            break;
-        case GLFW_KEY_D:
+        case GLFW_KEY_U:
             this_inst->imgui_on = !this_inst->imgui_on;
             std::cout << "ImGUI: " << this_inst->imgui_on << "\n";
             break;
         default:
+                this_inst->activeScene->on_key(key, action);
             break;
         }
     }
@@ -367,13 +387,17 @@ void GLApp::glfw_key_callback(GLFWwindow* window, int key, int scancode, int act
 
 void GLApp::glfw_scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
-    if (yoffset > 0.0) {
-        std::cout << "wheel up...\n";
-    }
+    auto this_inst = static_cast<GLApp*>(glfwGetWindowUserPointer(window));
+    this_inst->activeScene->on_scroll(yoffset);
 }
 
 void GLApp::glfw_cursor_position_callback(GLFWwindow* window, double xpos, double ypos)
 {
+    auto app = static_cast<GLApp*>(glfwGetWindowUserPointer(window));
+
+    if (glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED) {
+        app->activeScene->on_mouse_move(xpos, ypos);
+    }
 }
 
 
