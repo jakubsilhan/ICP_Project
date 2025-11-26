@@ -1,7 +1,7 @@
 #include <thread>
 
 #include "include/runners/GLApp.hpp"
-#include "include/render/drawings.hpp"
+#include "include/render/Drawings.hpp"
 #include "include/utils/GlDebugCallback.hpp"
 
 #include <fstream>
@@ -107,8 +107,8 @@ bool GLApp::init() {
         return false;
     }
 
-    // Init assets
-    init_assets();
+    // Init scene
+    activeScene = std::make_unique<ViewerScene>(windowWidth, windowHeight);
 
     return true;
 }
@@ -131,13 +131,6 @@ bool GLApp::init_imgui()
     return true;
 }
 
-void GLApp::init_assets() {
-    shader_library.emplace("simple_shader", std::make_shared<ShaderProgram>(std::filesystem::path("resources/basic_sdr/basic.vert"), std::filesystem::path("resources/basic_sdr/basic.frag")));
-
-    Model triangle_model = Model("resources/triangle.obj", shader_library.at("simple_shader"));
-    scene.emplace("triangle_object", std::move(triangle_model));
-}
-
 bool GLApp::run() {
     // Title string
     std::ostringstream titleString;
@@ -147,19 +140,10 @@ bool GLApp::run() {
     glCullFace(GL_BACK);
     glEnable(GL_CULL_FACE);
 
-    // first update = manual (no event for update arrived yet)
-    glfwGetFramebufferSize(window, &width, &height);
-    update_projection_matrix();
-    glViewport(0, 0, width, height);
-
-    camera.Position = glm::vec3(0, 0, 10);
     float last_frame_time = glfwGetTime();
 
     // Set background color
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-
-    // set shader
-    auto current_shader = shader_library.at("simple_shader");
 
     while (!glfwWindowShouldClose(window)) {
         // Reinitializations
@@ -172,27 +156,26 @@ bool GLApp::run() {
             ImGui_ImplGlfw_NewFrame();
             ImGui::NewFrame();
             ImGui::SetNextWindowPos(ImVec2(10, 10));
-            ImGui::SetNextWindowSize(ImVec2(250, 200));
+            ImGui::SetNextWindowSize(ImVec2(250, 270));
 
             ImGui::Begin("Info", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
             ImGui::Text("V-Sync: %s", vsync_on ? "ON" : "OFF");
             ImGui::Text("FPS: %.1f", FPS_main.get());
             ImGui::Text("Controls:");
-            ImGui::Text("C - switch color");
             ImGui::Text("V - VSync on/off");
             ImGui::Text("U - show/hide info");
             ImGui::Text("X - Reset camera");
+            ImGui::Text("E - switch color");
+            ImGui::Text("Q - switch model");
+            ImGui::Text("Scroll - scale model");
+
+            ImGui::Text("Movement:");
+            ImGui::Text("Enter Movement Mode - Left Click");
+            ImGui::Text("Exit Movement Mode - Right Click");
+            ImGui::Text("Movement - WASD + Space + C");
+            ImGui::Text("Speed Boost - Left Shift");
             ImGui::End();
         }
-
-        // Set color
-        switch (triangleColorIndex) {
-            case 0: shader_color = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f); break; // red
-            case 1: shader_color = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f); break; // green
-            case 2: shader_color = glm::vec4(0.0f, 0.0f, 1.0f, 1.0f); break; // blue
-        }
-
-        current_shader->setUniform("uniformColor", shader_color);
 
         // drawing
         glClear(GL_COLOR_BUFFER_BIT);
@@ -201,14 +184,12 @@ bool GLApp::run() {
         float current_frame_time = glfwGetTime();   // current time in seconds
         float delta_time = current_frame_time - last_frame_time; // lastFrame stored from previous frame
         last_frame_time = current_frame_time;
-        camera.ProcessInput(window, delta_time); // process keys etc.
-
-        current_shader->setUniform("uV_m", camera.GetViewMatrix());
-        current_shader->setUniform("uP_m", projection_matrix);
-
-        for (auto& [name, model] : scene) {
-            model.draw();
+        if (glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED) {
+            activeScene->process_input(window, delta_time);
         }
+
+        // Render scene
+        activeScene->render();
 
         // display imgui
         if (imgui_on) {
@@ -340,14 +321,10 @@ void GLApp::glfw_error_callback(int error, const char* description)
 void GLApp::glfw_framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
     auto this_inst = static_cast<GLApp*>(glfwGetWindowUserPointer(window));
-    this_inst->width = width;
-    this_inst->height = height;
+    this_inst->activeScene->on_resize(width, height);
 
     // set viewport
     glViewport(0, 0, width, height);
-    //now your canvas has [0,0] in bottom left corner, and its size is [width x height] 
-
-    this_inst->update_projection_matrix();
 }
 
 void GLApp::glfw_mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
@@ -362,7 +339,8 @@ void GLApp::glfw_mouse_button_callback(GLFWwindow* window, int button, int actio
                 if (mode == GLFW_CURSOR_NORMAL) {
                     // we are outside of application, catch the cursor
                     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-                    glfwGetCursorPos(window, &this_inst->cursorLastX, &this_inst->cursorLastY);
+                    auto [lx, ly] = this_inst->activeScene->get_last_cursor();
+                    glfwSetCursorPos(window, lx, ly);
                 }
                 else {
                     // we are already inside our game: shoot, click, etc.
@@ -396,19 +374,12 @@ void GLApp::glfw_key_callback(GLFWwindow* window, int key, int scancode, int act
             glfwSwapInterval(this_inst->vsync_on);
             std::cout << "VSync: " << this_inst->vsync_on << "\n";
             break;
-        case GLFW_KEY_C:
-            // Cycle color index
-            this_inst->triangleColorIndex = (this_inst->triangleColorIndex + 1) % 3;
-            break;
         case GLFW_KEY_U:
             this_inst->imgui_on = !this_inst->imgui_on;
             std::cout << "ImGUI: " << this_inst->imgui_on << "\n";
             break;
-        case GLFW_KEY_X:
-            this_inst->camera.Reset(glm::vec3(0, 0, 10));
-            std::cout << "Camera reset!" << "\n";
-            break;
         default:
+                this_inst->activeScene->on_key(key, action);
             break;
         }
     }
@@ -417,10 +388,7 @@ void GLApp::glfw_key_callback(GLFWwindow* window, int key, int scancode, int act
 void GLApp::glfw_scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
     auto this_inst = static_cast<GLApp*>(glfwGetWindowUserPointer(window));
-    this_inst->fov -= 10 * yoffset; // yoffset is mostly +1 or -1; one degree difference in fov is not visible
-    this_inst->fov = std::clamp(this_inst->fov, 10.0f, 170.0f); // limit FOV to reasonable values...
-
-    this_inst->update_projection_matrix();
+    this_inst->activeScene->on_scroll(yoffset);
 }
 
 void GLApp::glfw_cursor_position_callback(GLFWwindow* window, double xpos, double ypos)
@@ -428,33 +396,11 @@ void GLApp::glfw_cursor_position_callback(GLFWwindow* window, double xpos, doubl
     auto app = static_cast<GLApp*>(glfwGetWindowUserPointer(window));
 
     if (glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED) {
-        app->camera.ProcessMouseMovement(
-            xpos - app->cursorLastX,
-            (ypos - app->cursorLastY) * -1.0
-        );
+        app->activeScene->on_mouse_move(xpos, ypos);
     }
-    app->cursorLastX = xpos;
-    app->cursorLastY = ypos;
 }
 
 
-#pragma endregion
-
-#pragma region Transformation
-void GLApp::update_projection_matrix(void)
-{
-    if (height < 1)
-        height = 1;   // avoid division by 0
-
-    float ratio = static_cast<float>(width) / height;
-
-    projection_matrix = glm::perspective(
-        glm::radians(fov),   // The vertical Field of View, in radians: the amount of "zoom". Think "camera lens". Usually between 90° (extra wide) and 30° (quite zoomed in)
-        ratio,               // Aspect Ratio. Depends on the size of your window.
-        0.1f,                // Near clipping plane. Keep as big as possible, or you'll get precision issues.
-        20000.0f             // Far clipping plane. Keep as little as possible.
-    );
-}
 #pragma endregion
 
 GLApp::~GLApp()

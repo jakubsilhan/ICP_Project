@@ -1,5 +1,5 @@
 #include "include/runners/ThreadTrackApp.hpp"
-#include "include/render/drawings.hpp"
+#include "include/render/Drawings.hpp"
 #include "include/render/TriangleOld.hpp"
 #include <thread>
 

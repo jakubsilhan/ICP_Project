@@ -5,7 +5,7 @@
 #include <glm/glm.hpp>
 #include <glm/ext.hpp>
 
-#include "include/utils/ShaderProgram.hpp"
+#include "include/render/ShaderProgram.hpp"
 #include "include/assets/Mesh.hpp" 
 
 // set uniform according to name 

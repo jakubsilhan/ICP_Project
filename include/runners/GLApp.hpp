@@ -5,16 +5,14 @@
 #include <opencv2/opencv.hpp>
 #include "include/recognizers/FaceRecognizer.hpp"
 #include "include/recognizers/RedRecognizer.hpp"
-#include "include/utils/fps_meter.hpp"
+#include "include/utils/FpsMeter.hpp"
 #include "include/concurrency/SyncedDeque.hpp"
 #include "include/concurrency/Pool.hpp"
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-#include <include/utils/ShaderProgram.hpp>
-#include <include/assets/Mesh.hpp>
-#include <include/render/Model.hpp>
-#include <include/utils/Camera.hpp>
+#include <scenes/IScene.hpp>
+#include <scenes/ViewerScene.hpp>
 
 class GLApp {
 public:
@@ -45,9 +43,9 @@ private:
 	cv::VideoCapture captureDevice;
 	cv::Mat staticImage;
 	cv::Mat warningImage;
-	fps_meter FPS_main;
-	fps_meter FPS_cvdisplay;
-	fps_meter FPS_tracker;
+	FpsMeter FPS_main;
+	FpsMeter FPS_cvdisplay;
+	FpsMeter FPS_tracker;
 
 	void cvdisplayThread();
 	void trackerThread();
@@ -58,24 +56,10 @@ private:
 	int windowWidth = 800;
 	int windowHeight = 600;
 	bool vsync_on = true;
+	bool first_focused = false;
 
 	// Models
-	std::unordered_map<std::string, std::shared_ptr<ShaderProgram>> shader_library;
-	std::unordered_map<std::string, std::shared_ptr<Mesh>> mesh_library;
-	std::unordered_map<std::string, Model> scene;
-	int triangleColorIndex = 0;
-	void init_assets(void);
-
-	// Projection
-	int width{ 0 }, height{ 0 };
-	float fov = 60.0f;
-	glm::mat4 projection_matrix = glm::identity<glm::mat4>(); // store projection matrix here, update only on callbacks
-	void update_projection_matrix(void);
-
-	// Camera
-	Camera camera;
-	double cursorLastX{ 0 };
-	double cursorLastY{ 0 };
+	std::unique_ptr<ViewerScene> activeScene;
 
 
 	// ImGUI

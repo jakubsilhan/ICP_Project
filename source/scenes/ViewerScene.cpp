@@ -1,0 +1,148 @@
+#include "scenes/ViewerScene.hpp"
+#include "render/Model.hpp"
+#include "utils/Camera.hpp"
+#include "utils/MeshGen.hpp"
+
+ViewerScene::ViewerScene(int windowWidth, int windowHeight) {
+    width = windowWidth;
+    height = windowHeight;
+    camera.Position = glm::vec3(0, 0, 10);
+    update_projection_matrix();
+    //projection_matrix = glm::perspective(glm::radians(45.0f), 1.0f, 0.1f, 1000.0f);
+
+    init_assets();
+}
+
+void ViewerScene::init_assets() {
+    // Load shaders
+    shader_library.emplace("simple_shader", std::make_shared<ShaderProgram>(std::filesystem::path("resources/basic_sdr/basic.vert"), std::filesystem::path("resources/basic_sdr/basic.frag")));
+
+    // Load meshes
+    mesh_library.emplace("cube", generate_cube());
+    mesh_library.emplace("sphere_lowpoly", generate_sphere(4, 4));
+    mesh_library.emplace("sphere_highpoly", generate_sphere(8, 8));
+
+    // Load models
+    Model triangle_model = Model("resources/triangle.obj", shader_library.at("simple_shader"));
+    Model teapot_model = Model("resources/meshes/teapot_tri_vnt.obj", shader_library.at("simple_shader"));
+    models.emplace("triangle_object", std::move(triangle_model));
+    models.emplace("teapot_object", std::move(teapot_model));
+
+    // Construct models
+    Model cube_model;
+    cube_model.addMesh(mesh_library.at("cube"), shader_library.at("simple_shader"));
+    models.emplace("cube_object", std::move(cube_model));
+
+    Model sphere_l_model;
+    sphere_l_model.addMesh(mesh_library.at("sphere_lowpoly"), shader_library.at("simple_shader"));
+    models.emplace("sphere_l_object", std::move(sphere_l_model));
+
+    Model sphere_h_model;
+    sphere_h_model.addMesh(mesh_library.at("sphere_highpoly"), shader_library.at("simple_shader"));
+    models.emplace("sphere_h_object", std::move(sphere_h_model));
+
+    // Create index vector
+    for (auto& [key, model] : models)
+        model_names.push_back(key);
+}
+
+void ViewerScene::process_input(GLFWwindow* window, GLfloat deltaTime) {
+    camera.ProcessInput(window, deltaTime);
+}
+
+void ViewerScene::update(float dt) {
+    
+}
+
+void ViewerScene::render() {
+    // Shader
+    auto current_shader = shader_library.at("simple_shader");
+
+    // Color
+    glm::vec4 shader_color;
+    switch (triangleColorIndex) {
+        case 0: shader_color = glm::vec4(1, 0, 0, 1); break;
+        case 1: shader_color = glm::vec4(0, 1, 0, 1); break;
+        case 2: shader_color = glm::vec4(0, 0, 1, 1); break;
+    }
+    current_shader->setUniform("uniformColor", shader_color);
+
+    // React to user
+    current_shader->setUniform("uV_m", camera.GetViewMatrix());
+    current_shader->setUniform("uP_m", projection_matrix);
+
+    // All models
+    /*for (auto& [name, model] : models) {
+        model.draw();
+    }*/
+
+    // Model selection
+    Model model = models[model_names[selected_model]];
+    model.draw();
+}
+
+#pragma region Utils
+void ViewerScene::next_model() {
+    selected_model = (selected_model + 1) % model_names.size();
+}
+
+std::pair<double, double> ViewerScene::get_last_cursor() {
+    return { cursorLastX, cursorLastY };
+}
+#pragma endregion
+
+#pragma region Listeners
+void ViewerScene::on_key(int key, int action) {
+    if (action != GLFW_PRESS) return;
+    switch (key) {
+    case GLFW_KEY_E:
+        triangleColorIndex = (triangleColorIndex + 1) % 3;
+        break;
+    case GLFW_KEY_X:
+        camera.Reset(glm::vec3(0, 0, 10));
+        break;
+    case GLFW_KEY_Q:
+        next_model();
+        break;
+    default:
+        break;
+    }
+}
+
+void ViewerScene::on_mouse_move(double x, double y) {
+    camera.ProcessMouseMovement(x - cursorLastX, (y - cursorLastY) * -1.0);
+    cursorLastX = x;
+    cursorLastY = y;
+}
+
+void ViewerScene::on_scroll(double offset) {
+    fov -= 10 * offset;
+    fov = std::clamp(fov, 10.0f, 170.0f); // limit FOV to reasonable values
+
+    update_projection_matrix();
+}
+
+void ViewerScene::on_resize(int w, int h) {
+    width = w;
+    height = h;
+
+    update_projection_matrix();
+}
+#pragma endregion
+
+#pragma region Transformation
+void ViewerScene::update_projection_matrix()
+{
+    if (height < 1)
+        height = 1;   // avoid division by 0
+
+    float ratio = static_cast<float>(width) / height;
+
+    projection_matrix = glm::perspective(
+        glm::radians(fov),   // The vertical Field of View, in radians: the amount of "zoom". Think "camera lens". Usually between 90° (extra wide) and 30° (quite zoomed in)
+        ratio,               // Aspect Ratio. Depends on the size of your window.
+        0.1f,                // Near clipping plane. Keep as big as possible, or you'll get precision issues.
+        20000.0f             // Far clipping plane. Keep as little as possible.
+    );
+}
+#pragma endregion

@@ -6,7 +6,7 @@
 #include <iostream>
 
 #include "utils/OBJloader.hpp"
-#include "utils/file_utils.hpp"
+#include "utils/FileUtils.hpp"
 
 #define MAX_LINE_SIZE 1024
 

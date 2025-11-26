@@ -3,6 +3,7 @@
 #include <GLFW/glfw3.h>
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 class Camera
 {
@@ -50,6 +51,7 @@ public:
     void ProcessInput(GLFWwindow* window, GLfloat deltaTime)
     {
         glm::vec3 direction{ 0 };
+        GLfloat multiplier = 1.0f;
 
         if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
             direction += Front;
@@ -62,11 +64,16 @@ public:
 
         if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
             direction += Right;
-
+        if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+            direction += Up;
+        if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS)
+            direction -= Up;
         //... up, down, diagonal, ... 
+        if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+            multiplier = 2.0f;
 
         if (glm::length(direction) > 0.0001f)
-            Position += glm::normalize(direction) * MovementSpeed * deltaTime;
+            Position += glm::normalize(direction) * MovementSpeed * multiplier * deltaTime;
     }
 
     void ProcessMouseMovement(GLfloat xoffset, GLfloat yoffset, GLboolean constraintPitch = GL_TRUE)

@@ -9,7 +9,7 @@
 #include <glm/glm.hpp> 
 
 #include "assets/Mesh.hpp"
-#include "utils/ShaderProgram.hpp"
+#include "render/ShaderProgram.hpp"
 #include "utils/OBJloader.hpp"
 
 #define GLM_ENABLE_EXPERIMENTAL

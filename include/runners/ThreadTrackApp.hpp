@@ -3,7 +3,7 @@
 #include <opencv2/opencv.hpp>
 #include "include/recognizers/FaceRecognizer.hpp"
 #include "include/recognizers/RedRecognizer.hpp"
-#include "include/utils/fps_meter.hpp"
+#include "include/utils/FpsMeter.hpp"
 #include "include/concurrency/SyncedDeque.hpp"
 
 #include <GL/glew.h>
@@ -27,8 +27,8 @@ private:
 	cv::VideoCapture captureDevice;
 	cv::Mat staticImage;
 	cv::Mat warningImage;
-	fps_meter FPS_main;
-	fps_meter FPS_tracker;
+	FpsMeter FPS_main;
+	FpsMeter FPS_tracker;
 
 	// GL stuff
 	GLFWwindow* window = nullptr;
