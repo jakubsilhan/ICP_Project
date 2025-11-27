@@ -68,7 +68,8 @@ public:
         std::vector<GLuint> indices;
         loadOBJ(filename, vertices, indices);
 
-        addMesh(std::make_shared<Mesh>(vertices, indices, GL_TRIANGLE_STRIP), shader);
+        // TODO look into triangles/triangle_strips
+        addMesh(std::make_shared<Mesh>(vertices, indices, GL_TRIANGLES), shader);
     }
 
     void addMesh(std::shared_ptr<Mesh> mesh,
