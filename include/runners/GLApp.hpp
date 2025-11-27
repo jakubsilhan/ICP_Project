@@ -57,6 +57,7 @@ private:
 	int windowHeight = 600;
 	bool vsync_on = true;
 	bool first_focused = false;
+	bool antialiasing_on = true;
 
 	// Models
 	std::unique_ptr<ViewerScene> activeScene;

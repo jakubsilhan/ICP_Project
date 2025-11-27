@@ -51,6 +51,7 @@ bool GLApp::init() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_SAMPLES, 4);
 
     // Window config
     if (!load_config("resources/config.json")) {
@@ -139,6 +140,7 @@ bool GLApp::run() {
     // Culling
     glCullFace(GL_BACK);
     glEnable(GL_CULL_FACE);
+    glEnable(GL_MULTISAMPLE);
 
     float last_frame_time = glfwGetTime();
 
@@ -160,9 +162,11 @@ bool GLApp::run() {
 
             ImGui::Begin("Info", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
             ImGui::Text("V-Sync: %s", vsync_on ? "ON" : "OFF");
+            ImGui::Text("Antialiasing %s", antialiasing_on ? "ON" : "OFF");
             ImGui::Text("FPS: %.1f", FPS_main.get());
             ImGui::Text("Controls:");
             ImGui::Text("V - VSync on/off");
+            ImGui::Text("T - Antialising on/off");
             ImGui::Text("U - show/hide info");
             ImGui::Text("X - Reset camera");
             ImGui::Text("E - switch color");
@@ -373,6 +377,17 @@ void GLApp::glfw_key_callback(GLFWwindow* window, int key, int scancode, int act
             this_inst->vsync_on = !this_inst->vsync_on;
             glfwSwapInterval(this_inst->vsync_on);
             std::cout << "VSync: " << this_inst->vsync_on << "\n";
+            break;
+        case GLFW_KEY_T:
+            // Antialiasing on/off
+            if (this_inst->antialiasing_on) {
+                glDisable(GL_MULTISAMPLE);
+            }
+            else {
+                glEnable(GL_MULTISAMPLE);
+            }
+            this_inst->antialiasing_on = !this_inst->antialiasing_on;
+            std::cout << "Antialiasing: " << this_inst->antialiasing_on << "\n";
             break;
         case GLFW_KEY_U:
             this_inst->imgui_on = !this_inst->imgui_on;
