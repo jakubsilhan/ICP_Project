@@ -1,7 +1,6 @@
-#include "Texture.hpp"
+#include "render/Texture.hpp"
 
-
-GLuint Texture::gen_ckboard(void) {
+void Texture::gen_ckboard(void) {
     if (glIsTexture(ckboard_) != GL_TRUE) { // default checker-board texture yet not valid texture
         glCreateTextures(GL_TEXTURE_2D, 1, &ckboard_);
 
@@ -30,13 +29,18 @@ cv::Mat Texture::load_image(const std::filesystem::path& path) {
     return image;
 }
 
+Texture::Texture(void) {
+    Texture::gen_ckboard();
+    name_ = Texture::ckboard_;
+}
+
 Texture::Texture(const std::filesystem::path& path, Interpolation interpolation) : Texture{ load_image(path), interpolation } {}
 
 Texture::Texture(const glm::vec3& vec) : Texture{ cv::Mat{1, 1, CV_8UC3, cv::Scalar{vec.b, vec.g, vec.r}}, Interpolation::nearest } {}
 
 Texture::Texture(const glm::vec4& vec) : Texture{ cv::Mat{1, 1, CV_8UC4, cv::Scalar{vec.b, vec.g, vec.r, vec.a}}, Interpolation::nearest } {}
 
-Texture::Texture(cv::Mat const& image, Interpolation interpolation)
+Texture::Texture(cv::Mat const& image, Interpolation interpolation) : Texture{}
 {
     if (image.empty()) {
         throw std::runtime_error{ "the input image is empty" };

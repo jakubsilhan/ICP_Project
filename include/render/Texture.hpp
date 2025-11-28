@@ -5,6 +5,8 @@
 #include <GL/glew.h> 
 #include <glm/glm.hpp>
 
+#include "utils/NonCopyable.hpp"
+
 class Texture : private NonCopyable
 {
 public:
@@ -14,7 +16,7 @@ public:
         linear_mipmap_linear,
     };
 
-    Texture() = default;
+    Texture();
     Texture(const cv::Mat& image, Interpolation interpolation = Interpolation::linear_mipmap_linear); // default = best texture filtering
     Texture(const glm::vec3& vec); // synthetic single-color RGB texture
     Texture(const glm::vec4& vec); // synthetic single-color RGBA texture
@@ -30,7 +32,7 @@ public:
     void replace_image(const cv::Mat& image);
 private:
     cv::Mat load_image(const std::filesystem::path& path);
-    static GLuint gen_ckboard(void);  // create default texture
-    static inline GLuint ckboard_ = gen_ckboard(); // class-shared ckboard variable. gen_ckboard() is called just once.
-    GLuint name_{ ckboard_ }; // set default-constructed texture to ckboard pattern
+    static void gen_ckboard(void);  // create default texture
+    static inline GLuint ckboard_; // class-shared ckboard variable. Initialized lazily.
+    GLuint name_; // set default-constructed texture to ckboard pattern
 };

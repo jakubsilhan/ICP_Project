@@ -1,3 +1,5 @@
+#include <algorithm>
+
 #include "scenes/ViewerScene.hpp"
 #include "render/Model.hpp"
 #include "utils/Camera.hpp"
@@ -139,7 +141,7 @@ void ViewerScene::update_projection_matrix()
     float ratio = static_cast<float>(width) / height;
 
     projection_matrix = glm::perspective(
-        glm::radians(fov),   // The vertical Field of View, in radians: the amount of "zoom". Think "camera lens". Usually between 90° (extra wide) and 30° (quite zoomed in)
+        glm::radians(fov),   // The vertical Field of View, in radians: the amount of "zoom". Think "camera lens". Usually between 90ï¿½ (extra wide) and 30ï¿½ (quite zoomed in)
         ratio,               // Aspect Ratio. Depends on the size of your window.
         0.1f,                // Near clipping plane. Keep as big as possible, or you'll get precision issues.
         20000.0f             // Far clipping plane. Keep as little as possible.
