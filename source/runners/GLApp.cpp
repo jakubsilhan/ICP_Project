@@ -3,9 +3,13 @@
 #include "include/runners/GLApp.hpp"
 #include "include/render/Drawings.hpp"
 #include "include/utils/GlDebugCallback.hpp"
+#include "utils/Screenshot.hpp"
 
 #include <fstream>
 #include <nlohmann/json.hpp> // JSON
+
+#include <FreeImage.h>
+#include <tinyfiledialogs/tinyfiledialogs.h>
 
 // ImGUI
 #include <imgui.h>               // main ImGUI header
@@ -108,6 +112,9 @@ bool GLApp::init() {
         return false;
     }
 
+    // Init FreeImage
+    FreeImage_Initialise();
+
     // Init scene
     activeScene = std::make_unique<ViewerScene>(windowWidth, windowHeight);
 
@@ -171,6 +178,7 @@ bool GLApp::run() {
             ImGui::Text("X - Reset camera");
             ImGui::Text("E - switch color");
             ImGui::Text("Q - switch model");
+            ImGui::Text("P - take screenshot");
             ImGui::Text("Scroll - scale model");
 
             ImGui::Text("Movement:");
@@ -393,6 +401,27 @@ void GLApp::glfw_key_callback(GLFWwindow* window, int key, int scancode, int act
             this_inst->imgui_on = !this_inst->imgui_on;
             std::cout << "ImGUI: " << this_inst->imgui_on << "\n";
             break;
+        case GLFW_KEY_P:
+            {
+                auto filterPatterns = std::array{ "*.png" }; 
+                const char * path = tinyfd_saveFileDialog(
+                    "Save screenshot as...",
+                    NULL,
+                    filterPatterns.size(),
+                    filterPatterns.data(),
+                    "PNG files"
+                );
+                if (!path) {
+                    std::cout << "Saving screenshot canceled" << std::endl;
+                    break;
+                }
+                if (!makeScreenshot(path, 0, 0, this_inst->windowWidth, this_inst->windowHeight)) {
+                    std::cout << "Failed to save screenshot to: " << path << std::endl;
+                    break;
+                }
+                std::cout << "Saved screenshot to: " << path << std::endl;
+            }
+            break;
         default:
                 this_inst->activeScene->on_key(key, action);
             break;
@@ -427,6 +456,9 @@ GLApp::~GLApp()
     // Join threads
     if (cvdispthr.joinable()) cvdispthr.join();
     if (trackthr.joinable()) trackthr.join();
+
+    // clean up FreeImage
+    FreeImage_DeInitialise();
 
     // clean up ImGUI
     ImGui_ImplOpenGL3_Shutdown();

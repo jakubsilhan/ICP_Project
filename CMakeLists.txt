@@ -12,6 +12,8 @@ find_package(GLEW                 REQUIRED)
 find_package(glfw3         CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(imgui CONFIG REQUIRED)
+find_package(FreeImage CONFIG REQUIRED)
+find_package(tinyfiledialogs CONFIG REQUIRED)
 
 if(WIN32)
     find_package(OpenCV CONFIG REQUIRED PATHS "${OPENCV_DIR}/x64/vc16/lib")
@@ -32,6 +34,8 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     nlohmann_json::nlohmann_json
     ${OpenCV_LIBS}
     imgui::imgui
+    freeimage::FreeImage
+    tinyfiledialogs::tinyfiledialogs
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE
