@@ -432,7 +432,10 @@ void GLApp::glfw_key_callback(GLFWwindow* window, int key, int scancode, int act
 void GLApp::glfw_scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
     auto this_inst = static_cast<GLApp*>(glfwGetWindowUserPointer(window));
-    this_inst->activeScene->on_scroll(yoffset);
+    ImGuiIO& io = ImGui::GetIO();
+    if (!io.WantCaptureMouse) {
+        this_inst->activeScene->on_scroll(yoffset);
+    }
 }
 
 void GLApp::glfw_cursor_position_callback(GLFWwindow* window, double xpos, double ypos)
