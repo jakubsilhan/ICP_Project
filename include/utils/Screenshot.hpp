@@ -1,36 +1,25 @@
 #pragma once
 
-#include <filesystem>
 #include <GL/glew.h>
-#include <GLFW/glfw3.h>
-#include <FreeImage.h>
+#include <opencv2/opencv.hpp>
 
 bool makeScreenshot(const char * path, const GLint x, const GLint y, const GLsizei width, const GLsizei height) {
 
-    // Source - https://stackoverflow.com/a/6938633
-    // Posted by huy, modified by community. See post 'Timeline' for change history
-    // Retrieved 2025-12-01, License - CC BY-SA 3.0
-    // Modified for use in this project
+    // Make the GLubyte array
+    std::vector<GLubyte> pixels(width * height * 3); // 3 for RGB
 
-    // Make the GLubyte array, factor of 3 because it's RBG.
-    GLubyte* pixels = new GLubyte[3 * width * height];
+    glReadPixels(0, 0, width, height, GL_BGR, GL_UNSIGNED_BYTE, pixels.data());
 
-    glReadPixels(0, 0, width, height, GL_BGR, GL_UNSIGNED_BYTE, pixels);
+    // Convert to cv::Mat
+    cv::Mat image(height, width, CV_8UC3, pixels.data());
 
-    // Convert to FreeImage format
-    FIBITMAP* image = FreeImage_ConvertFromRawBits(pixels, width, height, 3 * width, 24, 0, 0, 0, false);
-    if (!image) {
-        return false;
-    }
+    // Flip vertically because OpenGL's origin is bottom-left
+    cv::flip(image, image, 0);
 
     // Save to file
-    if (!FreeImage_Save(FIF_PNG, image, path, 0)) {
+    if (!cv::imwrite(path, image)) {
         return false;
     }
-
-    // Free resources
-    FreeImage_Unload(image);
-    delete [] pixels;
 
     return true;
 }

@@ -11,7 +11,6 @@
         "opengl3-binding"
       ]
     },
-    "freeimage",
     "tinyfiledialogs"
   ]
 }

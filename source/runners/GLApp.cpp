@@ -8,7 +8,6 @@
 #include <fstream>
 #include <nlohmann/json.hpp> // JSON
 
-#include <FreeImage.h>
 #include <tinyfiledialogs/tinyfiledialogs.h>
 
 // ImGUI
@@ -111,9 +110,6 @@ bool GLApp::init() {
     if (!init_imgui()) {
         return false;
     }
-
-    // Init FreeImage
-    FreeImage_Initialise();
 
     // Init scene
     activeScene = std::make_unique<ViewerScene>(windowWidth, windowHeight);
@@ -459,9 +455,6 @@ GLApp::~GLApp()
     // Join threads
     if (cvdispthr.joinable()) cvdispthr.join();
     if (trackthr.joinable()) trackthr.join();
-
-    // clean up FreeImage
-    FreeImage_DeInitialise();
 
     // clean up ImGUI
     ImGui_ImplOpenGL3_Shutdown();
