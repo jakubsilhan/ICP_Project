@@ -25,7 +25,7 @@ void ViewerScene::init_assets() {
     mesh_library.emplace("sphere_highpoly", generate_sphere(8, 8));
 
     // Load models
-    Model triangle_model = Model("resources/triangle.obj", shader_library.at("simple_shader"));
+    Model triangle_model = Model("resources/meshes/triangle.obj", shader_library.at("simple_shader"));
     Model teapot_model = Model("resources/meshes/teapot_tri_vnt.obj", shader_library.at("simple_shader"));
     models.emplace("triangle_object", std::move(triangle_model));
     models.emplace("teapot_object", std::move(teapot_model));
