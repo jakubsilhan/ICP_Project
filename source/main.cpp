@@ -1,4 +1,6 @@
 #include "include/runners/GLApp.hpp"
+#define MINIAUDIO_IMPLEMENTATION
+#include "audio/Miniaudio.h"
 
 
 int main()
