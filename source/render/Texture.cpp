@@ -135,8 +135,6 @@ void Texture::replace_image(const cv::Mat& image) {
     if ((image.rows != get_height()) || (image.cols != get_width()))
         throw std::runtime_error("improper image replacement size");
 
-    cv::flip(image, image, 0);  // OpenGL vs. Window coordinates...
-
     // check channels and format
     int tex_format = 0;
     int basemiplevel = 0; // base image
