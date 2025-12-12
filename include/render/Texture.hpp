@@ -17,6 +17,7 @@ public:
     };
 
     Texture();
+    Texture(int cols, int rows, int type, Interpolation interpolation = Interpolation::linear_mipmap_linear);
     Texture(const cv::Mat& image, Interpolation interpolation = Interpolation::linear_mipmap_linear); // default = best texture filtering
     Texture(const glm::vec3& vec); // synthetic single-color RGB texture
     Texture(const glm::vec4& vec); // synthetic single-color RGBA texture
