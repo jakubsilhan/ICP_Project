@@ -11,6 +11,7 @@ ViewerScene::ViewerScene(int windowWidth, int windowHeight) {
     //projection_matrix = glm::perspective(glm::radians(45.0f), 1.0f, 0.1f, 1000.0f);
 
     init_assets();
+
 }
 
 void ViewerScene::init_assets() {
@@ -23,7 +24,7 @@ void ViewerScene::init_assets() {
     mesh_library.emplace("sphere_highpoly", generate_sphere(8, 8));
 
     // Load models
-    Model triangle_model = Model("resources/triangle.obj", shader_library.at("simple_shader"));
+    Model triangle_model = Model("resources/meshes/triangle.obj", shader_library.at("simple_shader"));
     Model teapot_model = Model("resources/meshes/teapot_tri_vnt.obj", shader_library.at("simple_shader"));
     models.emplace("triangle_object", std::move(triangle_model));
     models.emplace("teapot_object", std::move(teapot_model));
@@ -44,6 +45,11 @@ void ViewerScene::init_assets() {
     // Create index vector
     for (auto& [key, model] : models)
         model_names.push_back(key);
+
+    // Load audio
+    audio_manager.load("ouch", "resources/sounds/ouch.wav");
+    //audio_manager.load("step1", "resources/sounds/step1.wav");
+    //audio_manager.load("step2", "resources/sounds/step2.wav");
 }
 
 void ViewerScene::process_input(GLFWwindow* window, GLfloat deltaTime) {
@@ -103,6 +109,15 @@ void ViewerScene::on_key(int key, int action) {
         break;
     case GLFW_KEY_Q:
         next_model();
+        break;
+    case GLFW_KEY_T:
+        auto m_pos = models[model_names[selected_model]].getPosition();
+        audio_manager.play3D(
+            "ouch",           // name
+            m_pos.x, m_pos.y, m_pos.z, // Sound Source Position
+            camera.Position.x, camera.Position.y, camera.Position.z, // Listener Position
+            camera.Front.x, camera.Front.y, camera.Front.z           // Listener Direction
+        );
         break;
     default:
         break;

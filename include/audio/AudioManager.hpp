@@ -1,4 +1,5 @@
 #include "audio/Miniaudio.h"
+#include "utils/NonCopyable.hpp"
 #include <unordered_map>
 #include <unordered_set>
 #include <string>
@@ -6,8 +7,10 @@
 #include <filesystem>
 #include <iostream>
 
-class AudioManager {
+class AudioManager : NonCopyable {
 public:
+	AudioManager();
+	~AudioManager();
 	void load(const std::string& name, const std::filesystem::path& filename);
 	bool play3D(const std::string& name, float soundX, float soundY, float soundZ, float listX, float listY, float listZ, float listXDir, float listYDir, float listZDir);
 
