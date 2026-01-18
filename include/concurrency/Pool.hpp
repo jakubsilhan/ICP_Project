@@ -43,7 +43,9 @@ class Pool : NonCopyable {
             preallocate(nPreallocate);
         }
 
-        void init(auto... args) {
+        template <typename... Args>
+            requires std::constructible_from<T, Args...>
+        void init(Args... args) {
             init(std::tuple(args...));
         }
 
