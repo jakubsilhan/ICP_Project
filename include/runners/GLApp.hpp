@@ -1,5 +1,6 @@
 #pragma once
 
+#include <optional>
 #include <thread>
 
 #include <opencv2/opencv.hpp>
@@ -13,6 +14,7 @@
 #include <GLFW/glfw3.h>
 #include <scenes/IScene.hpp>
 #include <scenes/ViewerScene.hpp>
+#include "render/SyncedTexture.hpp"
 
 class GLApp {
 public:
@@ -28,28 +30,26 @@ public:
 private:
 	// OpenCV
 	typedef struct RecognizedData {
-		std::unique_ptr<cv::Mat> frame;
+		std::unique_ptr<SyncedTexture> frame;
 		std::vector<cv::Point2f> faces;
 		cv::Point2f red;
 	} RecognizedData;
+	RecognizedData defaultRecognizedData;
 	SyncedDeque<RecognizedData> deQueue;
-	Pool<cv::Mat> framePool;
+	Pool<SyncedTexture> framePool;
 	std::atomic<bool> endedMain = false;
 	std::atomic<bool> endedThread = false;
-	std::jthread cvdispthr;
 	std::jthread trackthr;
 	FaceRecognizer faceRecognizer;
 	RedRecognizer redRecognizer;
 	cv::VideoCapture captureDevice;
+	int cameraWidth, cameraHeight;
 	cv::Mat staticImage;
 	cv::Mat warningImage;
 	FpsMeter FPS_main;
-	FpsMeter FPS_cvdisplay;
 	FpsMeter FPS_tracker;
 
-	void cvdisplayThread();
 	void trackerThread();
-
 
 	// OpenGL
 	GLFWwindow* window = nullptr;
@@ -58,6 +58,8 @@ private:
 	bool vsync_on = true;
 	bool first_focused = false;
 	bool antialiasing_on = true;
+
+	GLFWwindow* trackerWorkerWindow = nullptr;
 
 	// Models
 	std::unique_ptr<ViewerScene> activeScene;
