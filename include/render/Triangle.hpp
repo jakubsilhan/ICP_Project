@@ -5,7 +5,7 @@
 class Triangle : private Model {
     public:
         Triangle(std::shared_ptr<ShaderProgram> shader);
-        void draw();
+        void draw(const glm::mat4& view_matrix, const glm::mat4& projection_matrix);
         void setColor(float r, float g, float b, float a);
     private:
         std::shared_ptr<ShaderProgram> shader;

@@ -88,10 +88,14 @@ public:
         //       use lambda funtion, call scripting language, etc. 
     }
 
-    void draw() {
+    void draw(const glm::mat4& view_matrix, const glm::mat4& projection_matrix) {
         // call draw() on mesh (all meshes)
         for (auto const& mesh_pkg : meshes) {
             mesh_pkg.shader->use(); // select proper shader
+
+            // Set view and projection matrices
+            mesh_pkg.shader->setUniform("uV_m", view_matrix);
+            mesh_pkg.shader->setUniform("uP_m", projection_matrix);
 
             // Calculate and set model matrix
             glm::mat4 mesh_model_matrix = createMM(mesh_pkg.origin, mesh_pkg.eulerAngles, mesh_pkg.scale);

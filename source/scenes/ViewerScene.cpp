@@ -13,6 +13,7 @@ ViewerScene::ViewerScene(int windowWidth, int windowHeight) {
     //projection_matrix = glm::perspective(glm::radians(45.0f), 1.0f, 0.1f, 1000.0f);
 
     init_assets();
+    update_shader_color();
 }
 
 void ViewerScene::init_assets() {
@@ -57,22 +58,6 @@ void ViewerScene::update(float dt) {
 }
 
 void ViewerScene::render() {
-    // Shader
-    auto current_shader = shader_library.at("simple_shader");
-
-    // Color
-    glm::vec4 shader_color;
-    switch (triangleColorIndex) {
-        case 0: shader_color = glm::vec4(1, 0, 0, 1); break;
-        case 1: shader_color = glm::vec4(0, 1, 0, 1); break;
-        case 2: shader_color = glm::vec4(0, 0, 1, 1); break;
-    }
-    current_shader->setUniform("uniformColor", shader_color);
-
-    // React to user
-    current_shader->setUniform("uV_m", camera.GetViewMatrix());
-    current_shader->setUniform("uP_m", projection_matrix);
-
     // All models
     /*for (auto& [name, model] : models) {
         model.draw();
@@ -80,7 +65,7 @@ void ViewerScene::render() {
 
     // Model selection
     Model model = models[model_names[selected_model]];
-    model.draw();
+    model.draw(camera.GetViewMatrix(), projection_matrix);
 }
 
 #pragma region Utils
@@ -91,6 +76,22 @@ void ViewerScene::next_model() {
 std::pair<double, double> ViewerScene::get_last_cursor() {
     return { cursorLastX, cursorLastY };
 }
+
+void ViewerScene::next_color() {
+    selected_color = (selected_color + 1) % 3;
+
+    update_shader_color();
+}
+
+void ViewerScene::update_shader_color() {
+    glm::vec4 shader_color;
+    switch (selected_color) {
+        case 0: shader_color = glm::vec4(1, 0, 0, 1); break;
+        case 1: shader_color = glm::vec4(0, 1, 0, 1); break;
+        case 2: shader_color = glm::vec4(0, 0, 1, 1); break;
+    }
+    shader_library.at("simple_shader")->setUniform("uniformColor", shader_color);
+}
 #pragma endregion
 
 #pragma region Listeners
@@ -98,7 +99,7 @@ void ViewerScene::on_key(int key, int action) {
     if (action != GLFW_PRESS) return;
     switch (key) {
     case GLFW_KEY_E:
-        triangleColorIndex = (triangleColorIndex + 1) % 3;
+        next_color();
         break;
     case GLFW_KEY_X:
         camera.Reset(glm::vec3(0, 0, 10));

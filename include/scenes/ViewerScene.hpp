@@ -42,12 +42,14 @@ private:
 	std::vector<std::string> model_names;
 	int selected_model = 0;
 	void next_model();
+	int selected_color = 0;
+	void next_color();
+	void update_shader_color();
 
 	// Transformations
 	int width{ 0 };
 	int height{ 0 };
 	float fov = 60.0f;
 	glm::mat4 projection_matrix = glm::identity<glm::mat4>();
-	int triangleColorIndex = 0;
 	void update_projection_matrix();
 };
