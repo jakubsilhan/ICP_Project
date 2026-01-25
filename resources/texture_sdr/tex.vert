@@ -1,7 +1,7 @@
 #version 460 core
-in vec3 aPos;
-in vec3 aNorm;
-in vec2 aTex;
+layout (location = 0) in vec3 aPos;
+layout (location = 1) in vec3 aNorm;
+layout (location = 2) in vec2 aTex;
 
 uniform mat4 uP_m = mat4(1.0f);
 uniform mat4 uM_m = mat4(1.0f);

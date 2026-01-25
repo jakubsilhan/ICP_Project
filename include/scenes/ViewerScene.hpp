@@ -9,6 +9,7 @@
 #include "render/ShaderProgram.hpp"
 #include "assets/Mesh.hpp"
 #include "render/Model.hpp"
+#include "render/Texture.hpp"
 
 class ViewerScene : public IScene {
 public:
@@ -36,6 +37,7 @@ private:
 	// Assets
 	std::unordered_map<std::string, std::shared_ptr<ShaderProgram>> shader_library;
 	std::unordered_map<std::string, std::shared_ptr<Mesh>> mesh_library;
+	std::unordered_map<std::string, std::shared_ptr<Texture>> texture_library;
 
 	// Models
 	std::unordered_map<std::string, Model> models;
