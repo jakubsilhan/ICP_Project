@@ -233,7 +233,7 @@ bool GLApp::run() {
             ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0,0));
             ImGui::SetNextWindowSize(cameraSize);
             ImGui::Begin("Camera", nullptr, ImGuiWindowFlags_NoDecoration);
-            ImGui::Image((ImTextureID)(intptr_t)recognizedData.frame->get_name(), cameraSize);
+            ImGui::Image((ImTextureID)(intptr_t)recognizedData.frame->get_name(), cameraSize, ImVec2(0, 1), ImVec2(1, 0));
             ImGui::End();
             ImGui::PopStyleVar();
         }
