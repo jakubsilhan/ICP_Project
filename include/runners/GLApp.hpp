@@ -63,7 +63,7 @@ private:
 
 	// Models
 	std::unique_ptr<ViewerScene> activeScene;
-
+	bool sceneOn = false;
 
 	// ImGUI
 	bool imgui_on = true;
