@@ -175,6 +175,7 @@ bool GLApp::run() {
     glCullFace(GL_BACK);
     glEnable(GL_CULL_FACE);
     glEnable(GL_MULTISAMPLE);
+    glEnable(GL_DEPTH_TEST);
 
     float last_frame_time = glfwGetTime();
 
@@ -242,7 +243,7 @@ bool GLApp::run() {
         }
 
         // drawing
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // React to user
         float current_frame_time = glfwGetTime();   // current time in seconds
