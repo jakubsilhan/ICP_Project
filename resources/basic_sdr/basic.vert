@@ -1,5 +1,5 @@
 #version 460 core
-in vec3 aPos;
+layout (location = 0) in vec3 aPos;
 
 uniform mat4 uP_m = mat4(1.0);
 uniform mat4 uM_m = mat4(1.0);

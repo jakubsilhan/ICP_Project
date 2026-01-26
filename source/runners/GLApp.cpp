@@ -1,11 +1,17 @@
+#include <iostream>
 #include <thread>
+#include <optional>
 
 #include "include/runners/GLApp.hpp"
 #include "include/render/Drawings.hpp"
+#include "render/SyncedTexture.hpp"
 #include "include/utils/GlDebugCallback.hpp"
+#include "utils/Screenshot.hpp"
 
 #include <fstream>
 #include <nlohmann/json.hpp> // JSON
+
+#include <tinyfiledialogs/tinyfiledialogs.h>
 
 // ImGUI
 #include <imgui.h>               // main ImGUI header
@@ -51,6 +57,7 @@ bool GLApp::init() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_SAMPLES, 4);
 
     // Window config
     if (!load_config("resources/config.json")) {
@@ -62,6 +69,14 @@ bool GLApp::init() {
     if (!window) {
         std::cerr << "Error: Could not create GLFW window. \n";
         glfwTerminate();
+        return false;
+    }
+
+    // Worker window context creation
+    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);  // Hidden window
+    trackerWorkerWindow = glfwCreateWindow(1, 1, "", NULL, window);
+    if (!trackerWorkerWindow) {
+        std::cerr << "Failed to create worker window\n";
         return false;
     }
 
@@ -106,6 +121,26 @@ bool GLApp::init() {
     if (!init_imgui()) {
         return false;
     }
+    
+    // Init tracking
+    faceRecognizer.init();
+    if (!captureDevice.open(0)) {
+        std::cerr << "Error: Could not open camera.\n";
+        return false;
+    }
+    cameraWidth = (int)captureDevice.get(cv::CAP_PROP_FRAME_WIDTH);
+    cameraHeight = (int)captureDevice.get(cv::CAP_PROP_FRAME_HEIGHT);
+    framePool.init(
+        cameraWidth,
+        cameraHeight,
+        CV_8UC3,
+        SyncedTexture::Interpolation::linear_mipmap_linear
+    );
+    defaultRecognizedData = RecognizedData{
+        std::make_unique<SyncedTexture>(),
+        std::vector<cv::Point2f>{},
+        cv::Point2f{}
+    };
 
     // Init scene
     activeScene = std::make_unique<ViewerScene>(windowWidth, windowHeight);
@@ -139,57 +174,89 @@ bool GLApp::run() {
     // Culling
     glCullFace(GL_BACK);
     glEnable(GL_CULL_FACE);
+    glEnable(GL_MULTISAMPLE);
+    glEnable(GL_DEPTH_TEST);
 
     float last_frame_time = glfwGetTime();
 
     // Set background color
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
+    // Run tracker
+    trackthr = std::jthread(&GLApp::trackerThread, this);
+
+    std::optional<RecognizedData> currentRecognizedData;
+
     while (!glfwWindowShouldClose(window)) {
         // Reinitializations
         titleString.str("");
         titleString.clear();
+
+        // Get recognized data
+        if (auto newRecognizedData = deQueue.tryPopFront()) {
+            if (currentRecognizedData) framePool.release(std::move(currentRecognizedData->frame));
+            currentRecognizedData = std::move(*newRecognizedData);
+        }
+        const RecognizedData& recognizedData = currentRecognizedData ? *currentRecognizedData : defaultRecognizedData;
+
+        // Process recognized data
+        sceneOn = (recognizedData.faces.size() == 1);
 
         // Prepare imgui render
         if (imgui_on) {
             ImGui_ImplOpenGL3_NewFrame();
             ImGui_ImplGlfw_NewFrame();
             ImGui::NewFrame();
+
+            // The info window
             ImGui::SetNextWindowPos(ImVec2(10, 10));
             ImGui::SetNextWindowSize(ImVec2(250, 270));
-
             ImGui::Begin("Info", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
             ImGui::Text("V-Sync: %s", vsync_on ? "ON" : "OFF");
+            ImGui::Text("Antialiasing %s", antialiasing_on ? "ON" : "OFF");
             ImGui::Text("FPS: %.1f", FPS_main.get());
             ImGui::Text("Controls:");
             ImGui::Text("V - VSync on/off");
-            ImGui::Text("U - show/hide info");
+            ImGui::Text("T - Antialising on/off");
+            ImGui::Text("U - show/hide the HUD");
             ImGui::Text("X - Reset camera");
             ImGui::Text("E - switch color");
             ImGui::Text("Q - switch model");
+            ImGui::Text("P - take screenshot");
             ImGui::Text("Scroll - scale model");
-
             ImGui::Text("Movement:");
             ImGui::Text("Enter Movement Mode - Left Click");
             ImGui::Text("Exit Movement Mode - Right Click");
             ImGui::Text("Movement - WASD + Space + C");
             ImGui::Text("Speed Boost - Left Shift");
             ImGui::End();
+
+            // The camera window
+            ImVec2 cameraSize((int)((float)cameraWidth/cameraHeight*150), 150);
+            ImGui::SetNextWindowPos(ImVec2(10, windowHeight-cameraSize[1]-10));
+            ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0,0));
+            ImGui::SetNextWindowSize(cameraSize);
+            ImGui::Begin("Camera", nullptr, ImGuiWindowFlags_NoDecoration);
+            ImGui::Image((ImTextureID)(intptr_t)recognizedData.frame->get_name(), cameraSize, ImVec2(0, 1), ImVec2(1, 0));
+            ImGui::End();
+            ImGui::PopStyleVar();
         }
 
         // drawing
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // React to user
         float current_frame_time = glfwGetTime();   // current time in seconds
         float delta_time = current_frame_time - last_frame_time; // lastFrame stored from previous frame
         last_frame_time = current_frame_time;
-        if (glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED) {
+        if (sceneOn && glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED) {
             activeScene->process_input(window, delta_time);
         }
 
         // Render scene
-        activeScene->render();
+        if (sceneOn) {
+            activeScene->render();
+        }
 
         // display imgui
         if (imgui_on) {
@@ -215,88 +282,40 @@ bool GLApp::run() {
         }
         FPS_main.update();
     }
-    return true;
-}
 
-#pragma region OpenCV
-bool GLApp::init_cv() {
-    // Classic tracker initializations
-    faceRecognizer.init();
-
-    staticImage = cv::imread("resources/lock.png");
-    warningImage = cv::imread("resources/warning.jpg");
-
-    if (!captureDevice.open(0)) {
-        std::cerr << "Error: Could not open camera.\n";
-        return false;
-    }
+    endedMain = true;
 
     return true;
-}
-
-bool GLApp::run_cv() {
-    cvdispthr = std::jthread(&GLApp::cvdisplayThread, this);
-    trackthr = std::jthread(&GLApp::trackerThread, this);
-    return true;
-}
-
-void GLApp::cvdisplayThread() {
-    RecognizedData data;
-
-    do {
-        if (endedThread) break;
-
-        if (!deQueue.empty()) {
-            data = deQueue.popFront();
-
-            // Display logic
-            switch (data.faces.size()) {
-            // 1. No face -> static image
-            case 0:
-                cv::imshow("Scene", staticImage);
-                break;
-
-            // 2. One face -> track "some" object (track red)
-            case 1:
-                draw_cross_normalized(*data.frame, data.faces.front(), 30, CV_RGB(0, 255, 0));
-                draw_cross_normalized(*data.frame, data.red, 30);
-                cv::imshow("Scene", *data.frame);
-                break;
-
-            // 3. More than one face -> display warning
-            default:
-                cv::imshow("Scene", warningImage);
-            }
-
-            framePool.release(std::move(data.frame));
-        }
-
-        // Measure and display fps
-        if (FPS_cvdisplay.is_updated())
-            std::cout << "FPS CV display: " << FPS_main.get() << std::endl;
-        FPS_cvdisplay.update();
-
-    } while (cv::waitKey(10) != 27);
-
-    endedThread = true;
 }
 
 void GLApp::trackerThread() {
-    std::unique_ptr<cv::Mat> frame;
+    cv::Mat cvFrame;
+    std::unique_ptr<SyncedTexture> frame;
     std::vector<cv::Point2f> faces;
     cv::Point2f red;
 
+    glfwMakeContextCurrent(trackerWorkerWindow);
+
     while (!endedMain && !endedThread) {
-        frame = framePool.acquire();
-        captureDevice.read(*frame);
-        if (frame->empty()) {
+        captureDevice.read(cvFrame);
+        if (cvFrame.empty()) {
             std::cerr << "Cam disconnected? End of video?" << std::endl;
             endedThread = true;
-            return;
+            break;
         }
 
-        faces = faceRecognizer.find_face(*frame);
-        red = redRecognizer.find_red(*frame);
+        faces = faceRecognizer.find_face(cvFrame);
+        red = redRecognizer.find_red(cvFrame);
+
+        for (auto face : faces) {
+            draw_cross_normalized(cvFrame, face, 30, CV_RGB(0, 255, 0));
+        }
+        draw_cross_normalized(cvFrame, red, 30);
+
+        frame = framePool.acquire();
+        frame->fence_wait();
+        frame->replace_image(cvFrame);
+        frame->fence_sync();
 
         deQueue.pushBack(RecognizedData{
             std::move(frame),
@@ -309,7 +328,6 @@ void GLApp::trackerThread() {
         FPS_tracker.update();
     }
 }
-#pragma endregion
 
 #pragma region Callbacks
 // Callbacks
@@ -321,6 +339,10 @@ void GLApp::glfw_error_callback(int error, const char* description)
 void GLApp::glfw_framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
     auto this_inst = static_cast<GLApp*>(glfwGetWindowUserPointer(window));
+
+    this_inst->windowWidth = width;
+    this_inst->windowHeight = height;
+
     this_inst->activeScene->on_resize(width, height);
 
     // set viewport
@@ -374,9 +396,41 @@ void GLApp::glfw_key_callback(GLFWwindow* window, int key, int scancode, int act
             glfwSwapInterval(this_inst->vsync_on);
             std::cout << "VSync: " << this_inst->vsync_on << "\n";
             break;
+        case GLFW_KEY_T:
+            // Antialiasing on/off
+            if (this_inst->antialiasing_on) {
+                glDisable(GL_MULTISAMPLE);
+            }
+            else {
+                glEnable(GL_MULTISAMPLE);
+            }
+            this_inst->antialiasing_on = !this_inst->antialiasing_on;
+            std::cout << "Antialiasing: " << this_inst->antialiasing_on << "\n";
+            break;
         case GLFW_KEY_U:
             this_inst->imgui_on = !this_inst->imgui_on;
             std::cout << "ImGUI: " << this_inst->imgui_on << "\n";
+            break;
+        case GLFW_KEY_P:
+            {
+                auto filterPatterns = std::array{ "*.png" }; 
+                const char * path = tinyfd_saveFileDialog(
+                    "Save screenshot as...",
+                    NULL,
+                    filterPatterns.size(),
+                    filterPatterns.data(),
+                    "PNG files"
+                );
+                if (!path) {
+                    std::cout << "Saving screenshot canceled" << std::endl;
+                    break;
+                }
+                if (!makeScreenshot(path, 0, 0, this_inst->windowWidth, this_inst->windowHeight)) {
+                    std::cout << "Failed to save screenshot to: " << path << std::endl;
+                    break;
+                }
+                std::cout << "Saved screenshot to: " << path << std::endl;
+            }
             break;
         default:
                 this_inst->activeScene->on_key(key, action);
@@ -388,7 +442,10 @@ void GLApp::glfw_key_callback(GLFWwindow* window, int key, int scancode, int act
 void GLApp::glfw_scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
     auto this_inst = static_cast<GLApp*>(glfwGetWindowUserPointer(window));
-    this_inst->activeScene->on_scroll(yoffset);
+    ImGuiIO& io = ImGui::GetIO();
+    if (!io.WantCaptureMouse) {
+        this_inst->activeScene->on_scroll(yoffset);
+    }
 }
 
 void GLApp::glfw_cursor_position_callback(GLFWwindow* window, double xpos, double ypos)
@@ -410,7 +467,6 @@ GLApp::~GLApp()
     endedThread = true;
 
     // Join threads
-    if (cvdispthr.joinable()) cvdispthr.join();
     if (trackthr.joinable()) trackthr.join();
 
     // clean up ImGUI
