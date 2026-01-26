@@ -10,6 +10,7 @@
 
 #include "assets/Mesh.hpp"
 #include "render/ShaderProgram.hpp"
+#include "render/Texture.hpp"
 #include "utils/OBJloader.hpp"
 
 #define GLM_ENABLE_EXPERIMENTAL
@@ -47,6 +48,7 @@ public:
     typedef struct mesh_package {
         std::shared_ptr<Mesh> mesh;         // geometry & topology, vertex attributes
         std::shared_ptr<ShaderProgram> shader;     // which shader to use to draw this part of the model
+        std::shared_ptr<Texture> texture;     // which texture to use to draw this part of the model
 
         glm::vec3 origin;                   // mesh origin relative to origin of the whole model
         glm::vec3 eulerAngles;              // mesh rotation relative to orientation of the whole model
@@ -55,7 +57,7 @@ public:
     std::vector<MeshPackage> meshes;
 
     Model() = default;
-    Model(const std::filesystem::path& filename, std::shared_ptr<ShaderProgram> shader) {
+    Model(const std::filesystem::path& filename, std::shared_ptr<ShaderProgram> shader, std::shared_ptr<Texture> texture = nullptr) {
         // Load mesh (all meshes) of the model, (in the future: load material of each mesh, load textures...)
         // notice: you can load multiple meshes and place them to proper positions, 
         //            multiple textures (with reusing) etc. to construct single complicated Model   
@@ -69,16 +71,17 @@ public:
         loadOBJ(filename, vertices, indices);
 
         // TODO look into triangles/triangle_strips
-        addMesh(std::make_shared<Mesh>(vertices, indices, GL_TRIANGLES), shader);
+        addMesh(std::make_shared<Mesh>(vertices, indices, GL_TRIANGLES), shader, texture);
     }
 
     void addMesh(std::shared_ptr<Mesh> mesh,
         std::shared_ptr<ShaderProgram> shader,
+        std::shared_ptr<Texture> texture = nullptr, // default no texture
         glm::vec3 origin = glm::vec3(0.0f),      // dafault value
         glm::vec3 eulerAngles = glm::vec3(0.0f), // dafault value
         glm::vec3 scale = glm::vec3(1.0f)       // dafault value
         ) {
-        meshes.emplace_back(mesh, shader, origin, eulerAngles, scale);
+        meshes.emplace_back(mesh, shader, texture, origin, eulerAngles, scale);
     }
 
     // update based on running time
@@ -88,10 +91,19 @@ public:
         //       use lambda funtion, call scripting language, etc. 
     }
 
-    void draw() {
+    void draw(const glm::mat4& view_matrix, const glm::mat4& projection_matrix) {
         // call draw() on mesh (all meshes)
         for (auto const& mesh_pkg : meshes) {
             mesh_pkg.shader->use(); // select proper shader
+
+            // Set view and projection matrices
+            mesh_pkg.shader->setUniform("uV_m", view_matrix);
+            mesh_pkg.shader->setUniform("uP_m", projection_matrix);
+
+            // Bind the texture
+            if (mesh_pkg.texture) {
+                mesh_pkg.texture->bind();
+            }
 
             // Calculate and set model matrix
             glm::mat4 mesh_model_matrix = createMM(mesh_pkg.origin, mesh_pkg.eulerAngles, mesh_pkg.scale);

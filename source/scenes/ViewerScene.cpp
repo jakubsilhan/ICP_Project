@@ -1,3 +1,5 @@
+#include <algorithm>
+
 #include "scenes/ViewerScene.hpp"
 #include "render/Model.hpp"
 #include "utils/Camera.hpp"
@@ -11,27 +13,47 @@ ViewerScene::ViewerScene(int windowWidth, int windowHeight) {
     //projection_matrix = glm::perspective(glm::radians(45.0f), 1.0f, 0.1f, 1000.0f);
 
     init_assets();
+    update_shader_color();
 }
 
 void ViewerScene::init_assets() {
     // Load shaders
     shader_library.emplace("simple_shader", std::make_shared<ShaderProgram>(std::filesystem::path("resources/basic_sdr/basic.vert"), std::filesystem::path("resources/basic_sdr/basic.frag")));
+    shader_library.emplace("texture_shader", std::make_shared<ShaderProgram>(std::filesystem::path("resources/texture_sdr/tex.vert"), std::filesystem::path("resources/texture_sdr/tex.frag")));
+    shader_library.at("texture_shader")->setUniform("tex0", 0);
 
     // Load meshes
-    mesh_library.emplace("cube", generate_cube());
+    mesh_library.emplace("cube_single", generate_cube(cube_atlas_single));
+    mesh_library.emplace("cube", generate_cube(cube_atlas_cross));
     mesh_library.emplace("sphere_lowpoly", generate_sphere(4, 4));
     mesh_library.emplace("sphere_highpoly", generate_sphere(8, 8));
 
+    // Load textures
+    texture_library.emplace("yellow_flowers", std::make_shared<Texture>("resources/textures/yellow_flowers.jpg"));
+    texture_library.emplace("wood_box", std::make_shared<Texture>("resources/textures/box_rgb888.png"));
+    texture_library.emplace("wood_box_logos", std::make_shared<Texture>("resources/textures/wood_texture_cube_logos.png"));
+    texture_library.emplace("globe", std::make_shared<Texture>("resources/textures/globe_texture.jpg"));
+
     // Load models
-    Model triangle_model = Model("resources/triangle.obj", shader_library.at("simple_shader"));
+    Model triangle_model = Model("resources/meshes/triangle.obj", shader_library.at("simple_shader"));
     Model teapot_model = Model("resources/meshes/teapot_tri_vnt.obj", shader_library.at("simple_shader"));
+    Model teapot_flower_model = Model("resources/meshes/teapot_tri_vnt.obj", shader_library.at("texture_shader"), texture_library.at("yellow_flowers"));
     models.emplace("triangle_object", std::move(triangle_model));
     models.emplace("teapot_object", std::move(teapot_model));
+    models.emplace("teapot_flower_object", std::move(teapot_flower_model));
 
     // Construct models
     Model cube_model;
-    cube_model.addMesh(mesh_library.at("cube"), shader_library.at("simple_shader"));
+    cube_model.addMesh(mesh_library.at("cube_single"), shader_library.at("simple_shader"));
     models.emplace("cube_object", std::move(cube_model));
+
+    Model wood_box_model;
+    wood_box_model.addMesh(mesh_library.at("cube_single"), shader_library.at("texture_shader"), texture_library.at("wood_box"));
+    models.emplace("wood_box_object", std::move(wood_box_model));
+
+    Model wood_box_logos_model;
+    wood_box_logos_model.addMesh(mesh_library.at("cube"), shader_library.at("texture_shader"), texture_library.at("wood_box_logos"));
+    models.emplace("wood_box_logos_object", std::move(wood_box_logos_model));
 
     Model sphere_l_model;
     sphere_l_model.addMesh(mesh_library.at("sphere_lowpoly"), shader_library.at("simple_shader"));
@@ -40,6 +62,10 @@ void ViewerScene::init_assets() {
     Model sphere_h_model;
     sphere_h_model.addMesh(mesh_library.at("sphere_highpoly"), shader_library.at("simple_shader"));
     models.emplace("sphere_h_object", std::move(sphere_h_model));
+
+    Model globe_model;
+    globe_model.addMesh(mesh_library.at("sphere_highpoly"), shader_library.at("texture_shader"), texture_library.at("globe"));
+    models.emplace("globe_object", std::move(globe_model));
 
     // Create index vector
     for (auto& [key, model] : models)
@@ -55,30 +81,14 @@ void ViewerScene::update(float dt) {
 }
 
 void ViewerScene::render() {
-    // Shader
-    auto current_shader = shader_library.at("simple_shader");
-
-    // Color
-    glm::vec4 shader_color;
-    switch (triangleColorIndex) {
-        case 0: shader_color = glm::vec4(1, 0, 0, 1); break;
-        case 1: shader_color = glm::vec4(0, 1, 0, 1); break;
-        case 2: shader_color = glm::vec4(0, 0, 1, 1); break;
-    }
-    current_shader->setUniform("uniformColor", shader_color);
-
-    // React to user
-    current_shader->setUniform("uV_m", camera.GetViewMatrix());
-    current_shader->setUniform("uP_m", projection_matrix);
-
     // All models
     /*for (auto& [name, model] : models) {
         model.draw();
     }*/
 
     // Model selection
-    Model model = models[model_names[selected_model]];
-    model.draw();
+    Model& model = models[model_names[selected_model]];
+    model.draw(camera.GetViewMatrix(), projection_matrix);
 }
 
 #pragma region Utils
@@ -89,6 +99,22 @@ void ViewerScene::next_model() {
 std::pair<double, double> ViewerScene::get_last_cursor() {
     return { cursorLastX, cursorLastY };
 }
+
+void ViewerScene::next_color() {
+    selected_color = (selected_color + 1) % 3;
+
+    update_shader_color();
+}
+
+void ViewerScene::update_shader_color() {
+    glm::vec4 shader_color;
+    switch (selected_color) {
+        case 0: shader_color = glm::vec4(1, 0, 0, 1); break;
+        case 1: shader_color = glm::vec4(0, 1, 0, 1); break;
+        case 2: shader_color = glm::vec4(0, 0, 1, 1); break;
+    }
+    shader_library.at("simple_shader")->setUniform("uniformColor", shader_color);
+}
 #pragma endregion
 
 #pragma region Listeners
@@ -96,7 +122,7 @@ void ViewerScene::on_key(int key, int action) {
     if (action != GLFW_PRESS) return;
     switch (key) {
     case GLFW_KEY_E:
-        triangleColorIndex = (triangleColorIndex + 1) % 3;
+        next_color();
         break;
     case GLFW_KEY_X:
         camera.Reset(glm::vec3(0, 0, 10));
@@ -139,7 +165,7 @@ void ViewerScene::update_projection_matrix()
     float ratio = static_cast<float>(width) / height;
 
     projection_matrix = glm::perspective(
-        glm::radians(fov),   // The vertical Field of View, in radians: the amount of "zoom". Think "camera lens". Usually between 90° (extra wide) and 30° (quite zoomed in)
+        glm::radians(fov),   // The vertical Field of View, in radians: the amount of "zoom". Think "camera lens". Usually between 90ï¿½ (extra wide) and 30ï¿½ (quite zoomed in)
         ratio,               // Aspect Ratio. Depends on the size of your window.
         0.1f,                // Near clipping plane. Keep as big as possible, or you'll get precision issues.
         20000.0f             // Far clipping plane. Keep as little as possible.

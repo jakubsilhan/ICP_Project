@@ -1,5 +1,5 @@
 #include "include/recognizers/FaceRecognizer.hpp"
-#include "include/render/drawings.hpp"
+#include "include/render/Drawings.hpp"
 
 FaceRecognizer::FaceRecognizer() {
 	// Constructor
