@@ -6,6 +6,7 @@
 #include "scenes/IScene.hpp"
 #include "utils/Camera.hpp"
 
+#include "audio/AudioManager.hpp"
 #include "render/ShaderProgram.hpp"
 #include "assets/Mesh.hpp"
 #include "render/Model.hpp"
@@ -33,6 +34,9 @@ private:
 	Camera camera;
 	double cursorLastX{ 0 };
 	double cursorLastY{ 0 };
+
+	// Audio
+	AudioManager audio_manager;
 
 	// Assets
 	std::unordered_map<std::string, std::shared_ptr<ShaderProgram>> shader_library;

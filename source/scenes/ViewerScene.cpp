@@ -70,6 +70,15 @@ void ViewerScene::init_assets() {
     // Create index vector
     for (auto& [key, model] : models)
         model_names.push_back(key);
+
+    // Load audio
+    audio_manager.load("ouch", "resources/sounds/ouch.wav", 0.5f, 10000.0f, 1.0f);
+    audio_manager.loadBGM("bgm", "resources/theme/03_E1M1_At_Doom's_Gate.mp3", 1.0f);
+    //audio_manager.load("step1", "resources/sounds/step1.wav");
+    //audio_manager.load("step2", "resources/sounds/step2.wav");
+
+    // Play BGM
+    audio_manager.playBGM("bgm", 0.2f);
 }
 
 void ViewerScene::process_input(GLFWwindow* window, GLfloat deltaTime) {
@@ -85,6 +94,10 @@ void ViewerScene::render() {
     /*for (auto& [name, model] : models) {
         model.draw();
     }*/
+
+    // Update listener location and clear sounds
+    audio_manager.setListenerPosition(camera.Position.x, camera.Position.y, camera.Position.z, camera.Front.x, camera.Front.y, camera.Front.z);
+    audio_manager.cleanFinishedSounds();
 
     // Model selection
     Model& model = models[model_names[selected_model]];
@@ -129,6 +142,13 @@ void ViewerScene::on_key(int key, int action) {
         break;
     case GLFW_KEY_Q:
         next_model();
+        break;
+    case GLFW_KEY_H:
+        auto m_pos = models[model_names[selected_model]].getPosition();
+        audio_manager.play3D(
+            "ouch",           // name
+            m_pos.x, m_pos.y, m_pos.z // Sound Source Position
+        );
         break;
     default:
         break;
