@@ -50,7 +50,7 @@ inline Atlas cube_atlas_cross{
     {4.0f,4.0f}
 };
 
-std::shared_ptr<Mesh> generate_cube(Atlas& atlas = cube_atlas_cross) {
+inline std::shared_ptr<Mesh> generate_cube(Atlas& atlas = cube_atlas_cross) {
 
     constexpr float u = 1.0f;
     constexpr float h = u / 2;
@@ -135,7 +135,7 @@ std::shared_ptr<Mesh> generate_cube(Atlas& atlas = cube_atlas_cross) {
 
 }
 
-std::shared_ptr<Mesh> generate_sphere(unsigned int sectors, unsigned int rings) {
+inline std::shared_ptr<Mesh> generate_sphere(unsigned int sectors, unsigned int rings) {
     std::vector<Vertex> V{};
     std::vector<GLuint> I{};
 

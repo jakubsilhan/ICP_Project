@@ -13,7 +13,7 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <scenes/IScene.hpp>
-#include <scenes/ViewerScene.hpp>
+#include <scenes/ShooterScene.hpp>
 #include "render/SyncedTexture.hpp"
 
 class GLApp {
@@ -62,7 +62,7 @@ private:
 	GLFWwindow* trackerWorkerWindow = nullptr;
 
 	// Models
-	std::unique_ptr<ViewerScene> activeScene;
+	std::unique_ptr<ShooterScene> activeScene;
 	bool sceneOn = false;
 
 	// ImGUI

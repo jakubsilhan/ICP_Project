@@ -143,7 +143,7 @@ bool GLApp::init() {
     };
 
     // Init scene
-    activeScene = std::make_unique<ViewerScene>(windowWidth, windowHeight);
+    activeScene = std::make_unique<ShooterScene>(windowWidth, windowHeight);
 
     return true;
 }

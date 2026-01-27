@@ -1,3 +1,5 @@
+#pragma once
+
 #include "audio/Miniaudio.h"
 #include "utils/NonCopyable.hpp"
 #include <unordered_map>
