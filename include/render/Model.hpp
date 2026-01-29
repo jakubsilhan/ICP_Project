@@ -113,6 +113,42 @@ public:
         }
     }
 
+#pragma region Bounding box
+    AABB getLocalAABB() const {
+        bool first = true;
+        AABB result{};
+
+        for (const auto& pkg : meshes) {
+            const AABB& meshBox = pkg.mesh->getLocalAABB();
+
+            glm::vec3 min = meshBox.min * pkg.scale + pkg.origin;
+            glm::vec3 max = meshBox.max * pkg.scale + pkg.origin;
+
+            if (first) {
+                result.min = min;
+                result.max = max;
+                first = false;
+            }
+            else {
+                result.min = glm::min(result.min, min);
+                result.max = glm::max(result.max, max);
+            }
+        }
+
+        return result;
+    }
+
+    AABB getWorldAABB() const {
+        AABB local = getLocalAABB();
+
+        glm::vec3 worldMin = local.min * scale + pivot_position;
+        glm::vec3 worldMax = local.max * scale + pivot_position;
+
+        return { worldMin, worldMax };
+    }
+
+#pragma endregion
+
 #pragma region Transformations
     void setPosition(const glm::vec3& new_position) {
         pivot_position = new_position;

@@ -203,32 +203,23 @@ bool GLApp::run() {
         sceneOn = (recognizedData.faces.size() == 1);
 
         // Prepare imgui render
-        if (imgui_on) {
-            ImGui_ImplOpenGL3_NewFrame();
-            ImGui_ImplGlfw_NewFrame();
-            ImGui::NewFrame();
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
 
-            // The info window
-            ImGui::SetNextWindowPos(ImVec2(10, 10));
-            ImGui::SetNextWindowSize(ImVec2(250, 270));
-            ImGui::Begin("Info", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
-            ImGui::Text("V-Sync: %s", vsync_on ? "ON" : "OFF");
-            ImGui::Text("Antialiasing %s", antialiasing_on ? "ON" : "OFF");
-            ImGui::Text("FPS: %.1f", FPS_main.get());
-            ImGui::Text("Controls:");
-            ImGui::Text("V - VSync on/off");
-            ImGui::Text("T - Antialising on/off");
-            ImGui::Text("U - show/hide the HUD");
-            ImGui::Text("X - Reset camera");
-            ImGui::Text("E - switch color");
-            ImGui::Text("Q - switch model");
-            ImGui::Text("P - take screenshot");
-            ImGui::Text("Scroll - scale model");
-            ImGui::Text("Movement:");
-            ImGui::Text("Enter Movement Mode - Left Click");
-            ImGui::Text("Exit Movement Mode - Right Click");
-            ImGui::Text("Movement - WASD + Space + C");
-            ImGui::Text("Speed Boost - Left Shift");
+        show_crosshair();
+
+        // The info window
+        ImGui::SetNextWindowPos(ImVec2(10, 10));
+        ImGui::SetNextWindowSize(ImVec2(250, 270));
+        ImGui::Begin("Info", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
+        ImGui::Text("V-Sync: %s", vsync_on ? "ON" : "OFF");
+        ImGui::Text("Antialiasing %s", antialiasing_on ? "ON" : "OFF");
+        ImGui::Text("FPS: %.1f", FPS_main.get());
+        ImGui::Text("Controls:");
+        ImGui::Text("U - show/hide all controls and camera");
+        if (imgui_on) {
+            show_controls();
             ImGui::End();
 
             // The camera window
@@ -241,6 +232,7 @@ bool GLApp::run() {
             ImGui::End();
             ImGui::PopStyleVar();
         }
+        else{ ImGui::End(); }
 
         // drawing
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -255,6 +247,7 @@ bool GLApp::run() {
 
         // Render scene - TODO revert
         //if (sceneOn) {
+        activeScene->update(delta_time);
         activeScene->render();
         //}
 
@@ -366,6 +359,7 @@ void GLApp::glfw_mouse_button_callback(GLFWwindow* window, int button, int actio
                 }
                 else {
                     // we are already inside our game: shoot, click, etc.
+                    this_inst->activeScene->on_mouse_button(button, action);
                     std::cout << "Bang!\n";
                 }
                 break;
@@ -476,6 +470,37 @@ void GLApp::glfw_cursor_position_callback(GLFWwindow* window, double xpos, doubl
 }
 
 
+#pragma endregion
+
+#pragma region Imgui
+void GLApp::show_controls() {
+    ImGui::Text("Controls:");
+    ImGui::Text("V - VSync on/off");
+    ImGui::Text("T - Antialising on/off");
+    ImGui::Text("X - Reset camera");
+    ImGui::Text("E - switch color");
+    ImGui::Text("Q - ping next target");
+    ImGui::Text("P - take screenshot");
+    ImGui::Text("Scroll - scale model");
+    ImGui::Text("Movement:");
+    ImGui::Text("Enter Movement Mode - Left Click");
+    ImGui::Text("Exit Movement Mode - Right Click");
+    ImGui::Text("Movement - WASD + Space + C");
+    ImGui::Text("Speed Boost - Left Shift");
+}
+
+void GLApp::show_crosshair() {
+    int windowWidth, windowHeight;
+    glfwGetFramebufferSize(window, &windowWidth, &windowHeight);
+
+    ImDrawList* draw_list = ImGui::GetForegroundDrawList();
+    float centerX = windowWidth * 0.5f;
+    float centerY = windowHeight * 0.5f;
+    float size = 10.0f; // half-length in pixels
+
+    draw_list->AddLine(ImVec2(centerX - size, centerY), ImVec2(centerX + size, centerY), IM_COL32(255, 255, 255, 255), 2.0f); // horizontal
+    draw_list->AddLine(ImVec2(centerX, centerY - size), ImVec2(centerX, centerY + size), IM_COL32(255, 255, 255, 255), 2.0f); // vertical
+}
 #pragma endregion
 
 GLApp::~GLApp()

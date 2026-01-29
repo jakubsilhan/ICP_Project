@@ -68,6 +68,8 @@ private:
 
 	// ImGUI
 	bool imgui_on = true;
+	void show_controls();
+	void show_crosshair();
 
 	// callbacks
 	static void glfw_error_callback(int error, const char* description);
