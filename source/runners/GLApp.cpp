@@ -249,14 +249,14 @@ bool GLApp::run() {
         float current_frame_time = glfwGetTime();   // current time in seconds
         float delta_time = current_frame_time - last_frame_time; // lastFrame stored from previous frame
         last_frame_time = current_frame_time;
-        if (sceneOn && glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED) {
-            activeScene->process_input(window, delta_time);
-        }
+        //if (sceneOn && glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED) {
+        activeScene->process_input(window, delta_time);
+        //}
 
-        // Render scene
-        if (sceneOn) {
-            activeScene->render();
-        }
+        // Render scene - TODO revert
+        //if (sceneOn) {
+        activeScene->render();
+        //}
 
         // display imgui
         if (imgui_on) {
@@ -432,6 +432,24 @@ void GLApp::glfw_key_callback(GLFWwindow* window, int key, int scancode, int act
                 std::cout << "Saved screenshot to: " << path << std::endl;
             }
             break;
+        case GLFW_KEY_F11:
+        {
+            this_inst->fullscreen = !this_inst->fullscreen;
+            if (this_inst->fullscreen) {
+                GLFWmonitor* primary = glfwGetPrimaryMonitor();
+                const GLFWvidmode* mode = glfwGetVideoMode(primary);
+                glfwSetWindowMonitor(this_inst->window, primary,
+                    0, 0, mode->width, mode->height,
+                    mode->refreshRate);
+            }
+            else {
+                glfwSetWindowMonitor(this_inst->window, nullptr,
+                    100, 100, // position on screen
+                    this_inst->windowWidth,
+                    this_inst->windowHeight,
+                    0);
+            }
+        }
         default:
                 this_inst->activeScene->on_key(key, action);
             break;

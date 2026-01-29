@@ -12,13 +12,25 @@
 #include "render/Model.hpp"
 #include "render/Texture.hpp"
 
+struct AABB {
+	glm::vec3 min;
+	glm::vec3 max;
+};
+
+struct SpawnedModel {
+	std::string model_name;
+	glm::vec3 position;
+	float respawn_time;   // seconds until it can respawn
+	float timer = 0.0f;  // current countdown
+	bool active = true;   // currently spawned or “dead”
+};
+
 class ShooterScene : public IScene {
 public:
 	ShooterScene(int windowWidth, int windowHeight);
-
 	void init_assets() override;
-
 	void process_input(GLFWwindow* window, GLfloat deltaTime) override;
+
 	void update(float dt) override;
 	void render() override;
 
@@ -58,4 +70,17 @@ private:
 	float fov = 60.0f;
 	glm::mat4 projection_matrix = glm::identity<glm::mat4>();
 	void update_projection_matrix();
+
+	// Targets
+	std::vector<SpawnedModel> spawned_models;
+	void spawn_models(int count, const std::string& model_name);
+	float default_respawn_time = 5.0f;
+
+	// Bounds
+	AABB world_bounds{
+		glm::vec3(-50.0f, -10.0f, -50.0f),
+		glm::vec3(50.0f,  10.0f,  50.0f)
+	};
+	glm::vec3 clamp_to_bounds(const glm::vec3& p, const AABB& b);
+	glm::vec3 random_position_in_bounds();
 };

@@ -10,7 +10,6 @@ ShooterScene::ShooterScene(int windowWidth, int windowHeight) {
     height = windowHeight;
     camera.Position = glm::vec3(0, 0, 10);
     update_projection_matrix();
-    //projection_matrix = glm::perspective(glm::radians(45.0f), 1.0f, 0.1f, 1000.0f);
 
     init_assets();
     update_shader_color();
@@ -23,45 +22,22 @@ void ShooterScene::init_assets() {
     shader_library.at("texture_shader")->setUniform("tex0", 0);
 
     // Load meshes
-    mesh_library.emplace("cube_single", generate_cube(cube_atlas_single));
     mesh_library.emplace("cube", generate_cube(cube_atlas_cross));
-    mesh_library.emplace("sphere_lowpoly", generate_sphere(4, 4));
     mesh_library.emplace("sphere_highpoly", generate_sphere(8, 8));
 
     // Load textures
-    texture_library.emplace("yellow_flowers", std::make_shared<Texture>("resources/textures/yellow_flowers.jpg"));
-    texture_library.emplace("wood_box", std::make_shared<Texture>("resources/textures/box_rgb888.png"));
+    //texture_library.emplace("yellow_flowers", std::make_shared<Texture>("resources/textures/yellow_flowers.jpg"));
     texture_library.emplace("wood_box_logos", std::make_shared<Texture>("resources/textures/wood_texture_cube_logos.png"));
     texture_library.emplace("globe", std::make_shared<Texture>("resources/textures/globe_texture.jpg"));
 
     // Load models
-    Model triangle_model = Model("resources/meshes/triangle.obj", shader_library.at("simple_shader"));
-    Model teapot_model = Model("resources/meshes/teapot_tri_vnt.obj", shader_library.at("simple_shader"));
-    Model teapot_flower_model = Model("resources/meshes/teapot_tri_vnt.obj", shader_library.at("texture_shader"), texture_library.at("yellow_flowers"));
-    models.emplace("triangle_object", std::move(triangle_model));
-    models.emplace("teapot_object", std::move(teapot_model));
-    models.emplace("teapot_flower_object", std::move(teapot_flower_model));
+    //Model teapot_flower_model = Model("resources/meshes/teapot_tri_vnt.obj", shader_library.at("texture_shader"), texture_library.at("yellow_flowers"));
+    //models.emplace("teapot_flower_object", std::move(teapot_flower_model));
 
     // Construct models
-    Model cube_model;
-    cube_model.addMesh(mesh_library.at("cube_single"), shader_library.at("simple_shader"));
-    models.emplace("cube_object", std::move(cube_model));
-
-    Model wood_box_model;
-    wood_box_model.addMesh(mesh_library.at("cube_single"), shader_library.at("texture_shader"), texture_library.at("wood_box"));
-    models.emplace("wood_box_object", std::move(wood_box_model));
-
     Model wood_box_logos_model;
     wood_box_logos_model.addMesh(mesh_library.at("cube"), shader_library.at("texture_shader"), texture_library.at("wood_box_logos"));
     models.emplace("wood_box_logos_object", std::move(wood_box_logos_model));
-
-    Model sphere_l_model;
-    sphere_l_model.addMesh(mesh_library.at("sphere_lowpoly"), shader_library.at("simple_shader"));
-    models.emplace("sphere_l_object", std::move(sphere_l_model));
-
-    Model sphere_h_model;
-    sphere_h_model.addMesh(mesh_library.at("sphere_highpoly"), shader_library.at("simple_shader"));
-    models.emplace("sphere_h_object", std::move(sphere_h_model));
 
     Model globe_model;
     globe_model.addMesh(mesh_library.at("sphere_highpoly"), shader_library.at("texture_shader"), texture_library.at("globe"));
@@ -74,15 +50,16 @@ void ShooterScene::init_assets() {
     // Load audio
     audio_manager.load("ouch", "resources/sounds/ouch.wav", 0.5f, 10000.0f, 1.0f);
     audio_manager.loadBGM("bgm", "resources/theme/03_E1M1_At_Doom's_Gate.mp3", 1.0f);
-    //audio_manager.load("step1", "resources/sounds/step1.wav");
-    //audio_manager.load("step2", "resources/sounds/step2.wav");
 
     // Play BGM
     audio_manager.playBGM("bgm", 0.2f);
+
+    spawn_models(2, "wood_box_logos_object");
 }
 
 void ShooterScene::process_input(GLFWwindow* window, GLfloat deltaTime) {
     camera.ProcessInput(window, deltaTime);
+    camera.Position = clamp_to_bounds(camera.Position, world_bounds);
 }
 
 void ShooterScene::update(float dt) {
@@ -90,19 +67,43 @@ void ShooterScene::update(float dt) {
 }
 
 void ShooterScene::render() {
-    // All models
-    /*for (auto& [name, model] : models) {
-        model.draw();
-    }*/
 
     // Update listener location and clear sounds
     audio_manager.setListenerPosition(camera.Position.x, camera.Position.y, camera.Position.z, camera.Front.x, camera.Front.y, camera.Front.z);
     audio_manager.cleanFinishedSounds();
 
     // Model selection
-    Model& model = models[model_names[selected_model]];
-    model.draw(camera.GetViewMatrix(), projection_matrix);
+    /*Model& model = models[model_names[selected_model]];
+    model.draw(camera.GetViewMatrix(), projection_matrix);*/
+
+    for (auto& sm : spawned_models) {
+        if (!sm.active) continue;
+
+        auto& model = models[sm.model_name];
+        model.setPosition(sm.position); // update model's transform
+        model.draw(camera.GetViewMatrix(), projection_matrix);
+    }
+
+    // All models
+    /*for (auto& [name, model] : models) {
+        model.draw();
+    }*/
 }
+
+#pragma region targets
+void ShooterScene::spawn_models(int count, const std::string& model_name) {
+    for (int i = 0; i < count; ++i) {
+        SpawnedModel m;
+        m.model_name = model_name;
+        m.position = random_position_in_bounds();
+        m.respawn_time = default_respawn_time;
+        m.timer = 0.0f;
+        m.active = true;
+        spawned_models.push_back(m);
+    }
+}
+
+#pragma endregion
 
 #pragma region Utils
 void ShooterScene::next_model() {
@@ -127,6 +128,17 @@ void ShooterScene::update_shader_color() {
     case 2: shader_color = glm::vec4(0, 0, 1, 1); break;
     }
     shader_library.at("simple_shader")->setUniform("uniformColor", shader_color);
+}
+
+glm::vec3 ShooterScene::clamp_to_bounds(const glm::vec3& p, const AABB& b) {
+    return glm::clamp(p, b.min, b.max);
+}
+
+glm::vec3 ShooterScene::random_position_in_bounds() {
+    float x = world_bounds.min.x + static_cast<float>(rand()) / RAND_MAX * (world_bounds.max.x - world_bounds.min.x);
+    float y = world_bounds.min.y + static_cast<float>(rand()) / RAND_MAX * (world_bounds.max.y - world_bounds.min.y);
+    float z = world_bounds.min.z + static_cast<float>(rand()) / RAND_MAX * (world_bounds.max.z - world_bounds.min.z);
+    return glm::vec3(x, y, z);
 }
 #pragma endregion
 

@@ -58,6 +58,7 @@ private:
 	bool vsync_on = true;
 	bool first_focused = false;
 	bool antialiasing_on = true;
+	bool fullscreen = false;
 
 	GLFWwindow* trackerWorkerWindow = nullptr;
 
