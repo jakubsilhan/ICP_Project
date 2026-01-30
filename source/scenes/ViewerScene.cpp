@@ -157,13 +157,14 @@ void ViewerScene::on_key(int key, int action) {
     case GLFW_KEY_Q:
         next_model();
         break;
-    case GLFW_KEY_H:
+    case GLFW_KEY_H: {
         auto m_pos = models[model_names[selected_model]].getPosition();
         audio_manager.play3D(
             "ping",           // name
             m_pos.x, m_pos.y, m_pos.z // Sound Source Position
         );
-        break;
+    }
+    break;
     default:
         break;
     }
