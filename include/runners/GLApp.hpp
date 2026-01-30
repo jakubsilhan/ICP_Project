@@ -13,19 +13,21 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <scenes/IScene.hpp>
-#include <scenes/ShooterScene.hpp>
 #include "render/SyncedTexture.hpp"
 
 class GLApp {
 public:
 	GLApp();
 	bool load_config(const std::string& filename);
-	bool init(void);
+	bool init();
 	bool init_imgui(void);
 	bool init_cv(void);
 	bool run(void);
 	bool run_cv();
 	~GLApp();
+
+	int windowWidth = 800;
+	int windowHeight = 600;
 
 private:
 	// OpenCV
@@ -53,8 +55,6 @@ private:
 
 	// OpenGL
 	GLFWwindow* window = nullptr;
-	int windowWidth = 800;
-	int windowHeight = 600;
 	bool vsync_on = true;
 	bool first_focused = false;
 	bool antialiasing_on = true;
@@ -63,12 +63,12 @@ private:
 	GLFWwindow* trackerWorkerWindow = nullptr;
 
 	// Models
-	std::unique_ptr<ShooterScene> activeScene;
+	std::unique_ptr<IScene> activeScene;
 	bool sceneOn = false;
 
 	// ImGUI
 	bool imgui_on = true;
-	void show_controls();
+	std::string gl_version_str;
 	void show_crosshair();
 
 	// callbacks

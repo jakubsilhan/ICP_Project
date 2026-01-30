@@ -1,5 +1,6 @@
 #include "include/runners/RasterApp.hpp"
 #include "include/runners/GLApp.hpp"
+#include "include/scenes/ShooterScene.hpp"
 #define MINIAUDIO_IMPLEMENTATION
 #include "audio/Miniaudio.h"
 

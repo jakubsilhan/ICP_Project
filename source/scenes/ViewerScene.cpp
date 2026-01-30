@@ -1,5 +1,9 @@
 #include <algorithm>
 
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
+
 #include "scenes/ViewerScene.hpp"
 #include "render/Model.hpp"
 #include "utils/Camera.hpp"
@@ -90,11 +94,6 @@ void ViewerScene::update(float dt) {
 }
 
 void ViewerScene::render() {
-    // All models
-    /*for (auto& [name, model] : models) {
-        model.draw();
-    }*/
-
     // Update listener location and clear sounds
     audio_manager.setListenerPosition(camera.Position.x, camera.Position.y, camera.Position.z, camera.Front.x, camera.Front.y, camera.Front.z);
     audio_manager.cleanFinishedSounds();
@@ -102,6 +101,21 @@ void ViewerScene::render() {
     // Model selection
     Model& model = models[model_names[selected_model]];
     model.draw(camera.GetViewMatrix(), projection_matrix);
+}
+
+void ViewerScene::display_controls() {
+    ImGui::Text("Controls:");
+        ImGui::Text("X - Reset camera");
+        ImGui::Text("E - switch color");
+        ImGui::Text("Q - switch model");
+        ImGui::Text("P - take screenshot");
+        ImGui::Text("H - play sound");
+        ImGui::Text("Scroll - scale model");
+        ImGui::Text("Movement:");
+        ImGui::Text("Enter Movement Mode - Left Click");
+        ImGui::Text("Exit Movement Mode - Right Click");
+        ImGui::Text("Movement - WASD + Space + C");
+        ImGui::Text("Speed Boost - Left Shift");
 }
 
 #pragma region Utils

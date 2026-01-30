@@ -30,18 +30,28 @@ void ShooterScene::init_assets() {
     mesh_library.emplace("sphere_highpoly", generate_sphere(8, 8));
 
     // Load textures
-    //texture_library.emplace("yellow_flowers", std::make_shared<Texture>("resources/textures/yellow_flowers.jpg"));
+    texture_library.emplace("yellow_flowers", std::make_shared<Texture>("resources/textures/yellow_flowers.jpg"));
+    texture_library.emplace("wood_box", std::make_shared<Texture>("resources/textures/box_rgb888.png"));
     texture_library.emplace("wood_box_logos", std::make_shared<Texture>("resources/textures/wood_texture_cube_logos.png"));
     texture_library.emplace("globe", std::make_shared<Texture>("resources/textures/globe_texture.jpg"));
+    //texture_library.emplace("trex", std::make_shared<Texture>("resources/textures/trex_diff.png"));
 
     // Load models
-    //Model teapot_flower_model = Model("resources/meshes/teapot_tri_vnt.obj", shader_library.at("texture_shader"), texture_library.at("yellow_flowers"));
-    //models.emplace("teapot_flower_object", std::move(teapot_flower_model));
+    Model teapot_flower_model = Model("resources/meshes/teapot_tri_vnt.obj", shader_library.at("texture_shader"), texture_library.at("yellow_flowers"));
+    models.emplace("teapot_flower_object", std::move(teapot_flower_model));
+    Model bunny_model = Model("resources/meshes/bunny_tri_vnt.obj", shader_library.at("simple_shader"));
+    models.emplace("bunny_object", std::move(bunny_model));
+    /*Model trex_model = Model("resources/meshes/trex.obj", shader_library.at("texture_shader"), texture_library.at("trex"));
+    models.emplace("trex_object", std::move(trex_model));*/
 
     // Construct models
     Model wood_box_logos_model;
     wood_box_logos_model.addMesh(mesh_library.at("cube"), shader_library.at("texture_shader"), texture_library.at("wood_box_logos"));
     models.emplace("wood_box_logos_object", std::move(wood_box_logos_model));
+
+    Model wood_box_model;
+    wood_box_logos_model.addMesh(mesh_library.at("cube"), shader_library.at("texture_shader"), texture_library.at("wood_box"));
+    models.emplace("wood_box_object", std::move(wood_box_model));
 
     Model globe_model;
     globe_model.addMesh(mesh_library.at("sphere_highpoly"), shader_library.at("texture_shader"), texture_library.at("globe"));
@@ -60,7 +70,11 @@ void ShooterScene::init_assets() {
     audio_manager.playBGM("bgm", 0.2f);
 
     spawn_models(1, "wood_box_logos_object");
+    spawn_models(1, "wood_box_object");
     spawn_models(1, "globe_object");
+    spawn_models(1, "teapot_flower_object");
+    spawn_models(1, "bunny_object");
+    //spawn_models(1, "trex_object");
 }
 
 void ShooterScene::process_input(GLFWwindow* window, GLfloat deltaTime) {
@@ -112,6 +126,19 @@ void ShooterScene::render() {
         sm.model->setPosition(sm.position); // update model's transform
         sm.model->draw(camera.GetViewMatrix(), projection_matrix);
     }
+}
+
+void ShooterScene::display_controls() {
+    ImGui::Text("Controls:");
+    ImGui::Text("X - Reset camera");
+    ImGui::Text("E - switch color");
+    ImGui::Text("Q - ping next target");
+    ImGui::Text("Scroll - change bgm volume");
+    ImGui::Text("Movement:");
+    ImGui::Text("Left Click - Enter Movement Mode / Shoot");
+    ImGui::Text("Right Click - Exit Movement Mode");
+    ImGui::Text("WASD + Space + C - Movement");
+    ImGui::Text("Left Shift - Speed Boost");
 }
 
 #pragma region Targets

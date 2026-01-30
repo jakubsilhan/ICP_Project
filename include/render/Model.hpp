@@ -16,6 +16,10 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/euler_angles.hpp>
 
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+
 class Model {
 private:
     // origin point of whole model
@@ -58,20 +62,49 @@ public:
 
     Model() = default;
     Model(const std::filesystem::path& filename, std::shared_ptr<ShaderProgram> shader, std::shared_ptr<Texture> texture = nullptr) {
-        // Load mesh (all meshes) of the model, (in the future: load material of each mesh, load textures...)
-        // notice: you can load multiple meshes and place them to proper positions, 
-        //            multiple textures (with reusing) etc. to construct single complicated Model   
-        //
-        // This can be done by extending OBJ file parser (OBJ can load hierarchical models),
-        // or by your own JSON model specification (or keep it simple and set a rule: 1model=1mesh ...) 
-        //
+        Assimp::Importer importer;
+        const aiScene* scene = importer.ReadFile(filename.string(),
+            aiProcess_Triangulate |
+            aiProcess_GenSmoothNormals |
+            aiProcess_FlipUVs |
+            aiProcess_JoinIdenticalVertices);
 
+        if (!scene || !scene->mRootNode || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE) {
+            throw std::runtime_error("Failed to load model: " + filename.string());
+        }
+
+        processNode(scene->mRootNode, scene, shader, texture);
+    }
+
+    void processNode(aiNode* node, const aiScene* scene, std::shared_ptr<ShaderProgram> shader, std::shared_ptr<Texture> texture = nullptr) {
+        for (unsigned int i = 0; i < node->mNumMeshes; i++) {
+            aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
+            addMesh(processMesh(mesh), shader, texture);
+         }
+        for (unsigned int i = 0; i < node->mNumChildren; i++) {
+            processNode(node->mChildren[i], scene, shader, texture);
+        }
+    }
+
+    std::shared_ptr<Mesh> processMesh(aiMesh* mesh) {
         std::vector<Vertex> vertices;
         std::vector<GLuint> indices;
-        loadOBJ(filename, vertices, indices);
 
-        // TODO look into triangles/triangle_strips
-        addMesh(std::make_shared<Mesh>(vertices, indices, GL_TRIANGLES), shader, texture);
+        for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
+            Vertex v;
+            v.position = glm::vec3(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z);
+            v.normal = mesh->HasNormals() ? glm::vec3(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z) : glm::vec3(0.0f);
+            v.texCoords = mesh->mTextureCoords[0] ? glm::vec2(mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y) : glm::vec2(0.0f);
+            vertices.push_back(v);
+        }
+
+        for (unsigned int i = 0; i < mesh->mNumFaces; i++) {
+            aiFace face = mesh->mFaces[i];
+            for (unsigned int j = 0; j < face.mNumIndices; j++)
+                indices.push_back(face.mIndices[j]);
+        }
+
+        return std::make_shared<Mesh>(vertices, indices, GL_TRIANGLES);
     }
 
     void addMesh(std::shared_ptr<Mesh> mesh,

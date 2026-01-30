@@ -7,6 +7,7 @@
 #include "render/SyncedTexture.hpp"
 #include "include/utils/GlDebugCallback.hpp"
 #include "utils/Screenshot.hpp"
+#include "scenes/ShooterScene.hpp"
 
 #include <fstream>
 #include <nlohmann/json.hpp> // JSON
@@ -121,6 +122,10 @@ bool GLApp::init() {
     if (!init_imgui()) {
         return false;
     }
+
+    // Get version info
+    std::string full_version = (const char*)glGetString(GL_VERSION);
+    gl_version_str = full_version.substr(0, full_version.find(' '));
     
     // Init tracking
     faceRecognizer.init();
@@ -211,28 +216,47 @@ bool GLApp::run() {
 
         // The info window
         ImGui::SetNextWindowPos(ImVec2(10, 10));
-        ImGui::SetNextWindowSize(ImVec2(250, 270));
+        if (imgui_on) {
+            ImGui::SetNextWindowSize(ImVec2(250, 210));
+        }
+        else {
+            ImGui::SetNextWindowSize(ImVec2(250, 140));
+        }
         ImGui::Begin("Info", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
         ImGui::Text("V-Sync: %s", vsync_on ? "ON" : "OFF");
         ImGui::Text("Antialiasing %s", antialiasing_on ? "ON" : "OFF");
         ImGui::Text("FPS: %.1f", FPS_main.get());
+        ImGui::Text("GL Version: %s", gl_version_str.c_str());
         ImGui::Text("Controls:");
-        ImGui::Text("U - show/hide all controls and camera");
+        ImGui::Text("U - show/hide more info and camera");
+
         if (imgui_on) {
-            show_controls();
+            ImGui::Text("V - VSync on/off");
+            ImGui::Text("T - Antialising on/off");
+            ImGui::Text("P - take screenshot");
+            ImGui::Text("F11 - Fullscreen/Windowed");
+        }
+        ImGui::End();
+        if (imgui_on) {
+            ImGui::SetNextWindowPos(ImVec2(windowWidth-250, 10));
+            ImGui::SetNextWindowSize(ImVec2(250, 210));
+            ImGui::Begin("Scene info", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
+            activeScene->display_controls();
             ImGui::End();
 
+        }
+
+        if (imgui_on) {
             // The camera window
-            ImVec2 cameraSize((int)((float)cameraWidth/cameraHeight*150), 150);
-            ImGui::SetNextWindowPos(ImVec2(10, windowHeight-cameraSize[1]-10));
-            ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0,0));
+            ImVec2 cameraSize((int)((float)cameraWidth / cameraHeight * 150), 150);
+            ImGui::SetNextWindowPos(ImVec2(10, windowHeight - cameraSize[1] - 10));
+            ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
             ImGui::SetNextWindowSize(cameraSize);
             ImGui::Begin("Camera", nullptr, ImGuiWindowFlags_NoDecoration);
             ImGui::Image((ImTextureID)(intptr_t)recognizedData.frame->get_name(), cameraSize, ImVec2(0, 1), ImVec2(1, 0));
             ImGui::End();
             ImGui::PopStyleVar();
         }
-        else{ ImGui::End(); }
 
         // drawing
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -252,10 +276,10 @@ bool GLApp::run() {
         //}
 
         // display imgui
-        if (imgui_on) {
-            ImGui::Render();
-            ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-        }
+        //if (imgui_on) {
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        //}
 
         // Switch background and foreground buffers (rendering is always done in background first)
         glfwSwapBuffers(window);
@@ -473,22 +497,6 @@ void GLApp::glfw_cursor_position_callback(GLFWwindow* window, double xpos, doubl
 #pragma endregion
 
 #pragma region Imgui
-void GLApp::show_controls() {
-    ImGui::Text("Controls:");
-    ImGui::Text("V - VSync on/off");
-    ImGui::Text("T - Antialising on/off");
-    ImGui::Text("X - Reset camera");
-    ImGui::Text("E - switch color");
-    ImGui::Text("Q - ping next target");
-    ImGui::Text("P - take screenshot");
-    ImGui::Text("Scroll - scale model");
-    ImGui::Text("Movement:");
-    ImGui::Text("Enter Movement Mode - Left Click");
-    ImGui::Text("Exit Movement Mode - Right Click");
-    ImGui::Text("Movement - WASD + Space + C");
-    ImGui::Text("Speed Boost - Left Shift");
-}
-
 void GLApp::show_crosshair() {
     int windowWidth, windowHeight;
     glfwGetFramebufferSize(window, &windowWidth, &windowHeight);

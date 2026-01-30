@@ -21,6 +21,7 @@ public:
 	void process_input(GLFWwindow* window, GLfloat deltaTime) override;
 	void update(float dt) override;
 	void render() override;
+	void display_controls() override;
 
 	std::pair<double, double> get_last_cursor() override;
 
