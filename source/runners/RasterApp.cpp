@@ -112,7 +112,7 @@ int RasterApp::run(void)
 {
     cv::Mat frame;
     std::vector<uchar> bytes;
-    float target_coefficient = 0.5f; // used as size-ratio, or quality-coefficient
+    float target_coefficient = 1.0f; // used as size-ratio, or quality-coefficient
     try {
         while (capture.isOpened())
         {

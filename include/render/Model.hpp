@@ -61,6 +61,7 @@ public:
 
     Model() = default;
     Model(const std::filesystem::path& filename, std::shared_ptr<ShaderProgram> shader, std::shared_ptr<Texture> texture = nullptr) {
+        // Initialize and prepare .obj reader
         Assimp::Importer importer;
         const aiScene* scene = importer.ReadFile(filename.string(),
             aiProcess_Triangulate |
@@ -68,18 +69,22 @@ public:
             aiProcess_FlipUVs |
             aiProcess_JoinIdenticalVertices);
 
+        // Safety check
         if (!scene || !scene->mRootNode || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE) {
             throw std::runtime_error("Failed to load model: " + filename.string());
         }
 
+        // Start recursive walkthrough the model's tree
         processNode(scene->mRootNode, scene, shader, texture);
     }
 
     void processNode(aiNode* node, const aiScene* scene, std::shared_ptr<ShaderProgram> shader, std::shared_ptr<Texture> texture = nullptr) {
+        // Process all meshes in node
         for (unsigned int i = 0; i < node->mNumMeshes; i++) {
-            aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-            addMesh(processMesh(mesh), shader, texture);
+            aiMesh* mesh = scene->mMeshes[node->mMeshes[i]]; // Get mesh from scene
+            addMesh(processMesh(mesh), shader, texture); // Convert to mesh and add to model
          }
+        // Recursive walkthrough the model's tree
         for (unsigned int i = 0; i < node->mNumChildren; i++) {
             processNode(node->mChildren[i], scene, shader, texture);
         }
@@ -89,6 +94,7 @@ public:
         std::vector<Vertex> vertices;
         std::vector<GLuint> indices;
 
+        // Process vertices
         for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
             Vertex v;
             v.position = glm::vec3(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z);
@@ -97,12 +103,14 @@ public:
             vertices.push_back(v);
         }
 
+        // Process vertex indices
         for (unsigned int i = 0; i < mesh->mNumFaces; i++) {
             aiFace face = mesh->mFaces[i];
             for (unsigned int j = 0; j < face.mNumIndices; j++)
                 indices.push_back(face.mIndices[j]);
         }
 
+        // Create final mesh
         return std::make_shared<Mesh>(vertices, indices, GL_TRIANGLES);
     }
 

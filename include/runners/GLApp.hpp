@@ -70,6 +70,7 @@ private:
 	// ImGUI
 	bool imgui_on = true;
 	std::string gl_version_str;
+	std::string gl_profile;
 	void show_crosshair();
 
 	// callbacks

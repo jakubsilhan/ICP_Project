@@ -12,38 +12,14 @@
 #include "render/Model.hpp"
 #include "render/Texture.hpp"
 
-//struct AABB {
-//	glm::vec3 min;
-//	glm::vec3 max;
-//
-//	// Check if a point is inside the AABB
-//	bool contains(const glm::vec3& point) const {
-//		return point.x >= min.x && point.x <= max.x &&
-//			point.y >= min.y && point.y <= max.y &&
-//			point.z >= min.z && point.z <= max.z;
-//	}
-//
-//	// Center of AABB
-//	glm::vec3 center() const {
-//		return (min + max) * 0.5f;
-//	}
-//
-//	// Get half-extents of AABB
-//	glm::vec3 halfExtents() const {
-//		return (max - min) * 0.5f;
-//	}
-//};
-
-
-
 struct Target {
 	Model* model = nullptr;
-	glm::vec3 position;
-	float respawn_time;   // seconds until it can respawn
-	float timer = 0.0f;  // current countdown
-	bool active = true;   // currently spawned or "dead"
-	float scale = 1.0f;   // for bounding box calculation
-	glm::vec3 velocity;
+	glm::vec3 position;		
+	float respawn_time;		// Seconds to respawn
+	float timer = 0.0f;		// Current countdown
+	bool active = true;		// Currently spawned or "dead"
+	float scale = 1.0f;		// For bounding box calculation
+	glm::vec3 velocity;		// Target movement
 	float maxSpeed = 5.0f;
 
 	AABB getBoundingBox() const {
@@ -57,6 +33,7 @@ struct Target {
 };
 
 struct Ray {
+	// Ray for raycasting
 	glm::vec3 origin;
 	glm::vec3 direction;
 
@@ -66,6 +43,7 @@ struct Ray {
 };
 
 struct RayHit {
+	// Hit detection
 	bool hit = false;
 	float distance = 0.0f;
 	glm::vec3 point;

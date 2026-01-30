@@ -125,7 +125,9 @@ bool GLApp::init() {
 
     // Get version info
     std::string full_version = (const char*)glGetString(GL_VERSION);
-    gl_version_str = full_version.substr(0, full_version.find(' '));
+    std::stringstream ss(full_version);
+    ss >> gl_version_str;
+    ss >> gl_profile;
     
     // Init tracking
     faceRecognizer.init();
@@ -217,16 +219,17 @@ bool GLApp::run() {
         // The info window
         ImGui::SetNextWindowPos(ImVec2(10, 10));
         if (imgui_on) {
-            ImGui::SetNextWindowSize(ImVec2(250, 210));
+            ImGui::SetNextWindowSize(ImVec2(250, 220));
         }
         else {
-            ImGui::SetNextWindowSize(ImVec2(250, 140));
+            ImGui::SetNextWindowSize(ImVec2(250, 150));
         }
         ImGui::Begin("Info", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
         ImGui::Text("V-Sync: %s", vsync_on ? "ON" : "OFF");
         ImGui::Text("Antialiasing %s", antialiasing_on ? "ON" : "OFF");
         ImGui::Text("FPS: %.1f", FPS_main.get());
         ImGui::Text("GL Version: %s", gl_version_str.c_str());
+        ImGui::Text("GL Profile: %s", gl_profile.c_str());
         ImGui::Text("Controls:");
         ImGui::Text("U - show/hide more info and camera");
 
@@ -407,18 +410,15 @@ void GLApp::glfw_key_callback(GLFWwindow* window, int key, int scancode, int act
     auto this_inst = static_cast<GLApp*>(glfwGetWindowUserPointer(window));
     if ((action == GLFW_PRESS) || (action == GLFW_REPEAT)) {
         switch (key) {
-        case GLFW_KEY_ESCAPE:
-            // Exit The App
+        case GLFW_KEY_ESCAPE: // Exit The App
             glfwSetWindowShouldClose(window, GLFW_TRUE);
             break;
-        case GLFW_KEY_V:
-            // Vsync on/off
+        case GLFW_KEY_V: // Vsync on/off
             this_inst->vsync_on = !this_inst->vsync_on;
             glfwSwapInterval(this_inst->vsync_on);
             std::cout << "VSync: " << this_inst->vsync_on << "\n";
             break;
-        case GLFW_KEY_T:
-            // Antialiasing on/off
+        case GLFW_KEY_T: // Antialiasing on/off
             if (this_inst->antialiasing_on) {
                 glDisable(GL_MULTISAMPLE);
             }
@@ -428,11 +428,11 @@ void GLApp::glfw_key_callback(GLFWwindow* window, int key, int scancode, int act
             this_inst->antialiasing_on = !this_inst->antialiasing_on;
             std::cout << "Antialiasing: " << this_inst->antialiasing_on << "\n";
             break;
-        case GLFW_KEY_U:
+        case GLFW_KEY_U: // UI toggle
             this_inst->imgui_on = !this_inst->imgui_on;
             std::cout << "ImGUI: " << this_inst->imgui_on << "\n";
             break;
-        case GLFW_KEY_P:
+        case GLFW_KEY_P: // Screenshot
             {
                 auto filterPatterns = std::array{ "*.png" }; 
                 const char * path = tinyfd_saveFileDialog(
@@ -453,7 +453,7 @@ void GLApp::glfw_key_callback(GLFWwindow* window, int key, int scancode, int act
                 std::cout << "Saved screenshot to: " << path << std::endl;
             }
             break;
-        case GLFW_KEY_F11:
+        case GLFW_KEY_F11: // Toggle fullscreen
         {
             this_inst->fullscreen = !this_inst->fullscreen;
             if (this_inst->fullscreen) {

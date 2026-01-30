@@ -67,9 +67,10 @@ void ShooterScene::init_assets() {
     audio_manager.load("shot", "resources/sounds/gunshot.wav", 0.5f, 10000.0f, 1.0f);
     audio_manager.loadBGM("bgm", "resources/theme/03_E1M1_At_Doom's_Gate.mp3", 1.0f);
 
-    //// Play BGM
+    // Play BGM
     audio_manager.playBGM("bgm", 0.2f);
 
+    // Create targets
     spawn_models(1, "wood_box_logos_object");
     spawn_models(1, "wood_box_object");
     spawn_models(1, "globe_object");
@@ -84,16 +85,18 @@ void ShooterScene::process_input(GLFWwindow* window, GLfloat deltaTime) {
 }
 
 void ShooterScene::update(float dt) {
-    // respawn
+    // Respawn
     for (auto& sm : spawned_models) {
         if (!sm.active) {
             sm.timer += dt;
             if (sm.timer >= sm.respawn_time) {
+                // Reset Target
                 sm.position = random_position_in_bounds();
                 sm.timer = 0.0f;
                 sm.scale = 1.0f;
                 sm.active = true;
 
+                // Reinitialize velocity
                 float speed = ((float)rand() / RAND_MAX) * 1.5f + 0.5f;
                 float angleXY = ((float)rand() / RAND_MAX) * 2.0f * glm::pi<float>();
                 float angleZ = ((float)rand() / RAND_MAX) * 2.0f * glm::pi<float>();
@@ -130,6 +133,7 @@ void ShooterScene::render() {
 }
 
 void ShooterScene::display_controls() {
+    // Controls UI
     ImGui::Text("Controls:");
     ImGui::Text("X - Reset camera");
     ImGui::Text("E - switch color");
@@ -144,8 +148,10 @@ void ShooterScene::display_controls() {
 
 #pragma region Targets
 void ShooterScene::spawn_models(int count, const std::string& model_name) {
+    // Spawn instances of targets
     Model& model = models.at(model_name);
     for (int i = 0; i < count; ++i) {
+        // Initialize targett
         Target t;
         t.model = &model;
         t.position = random_position_in_bounds();
@@ -172,6 +178,7 @@ void ShooterScene::spawn_models(int count, const std::string& model_name) {
 
 #pragma region shooting
 Ray ShooterScene::create_ray_from_camera() {
+    // Creates Ray for raycasting a shot
     Ray ray;
     ray.origin = camera.Position;
     ray.direction = glm::normalize(camera.Front);
@@ -180,36 +187,45 @@ Ray ShooterScene::create_ray_from_camera() {
 
 bool ShooterScene::ray_aabb_intersection(const Ray& ray, const AABB& aabb, float& t) {
     // Slab method for ray-AABB intersection
-    glm::vec3 invDir = 1.0f / ray.direction;
+    glm::vec3 invDir = 1.0f / ray.direction; // Inverse direction for optimization
 
+    // Find distance to near and far plane = calulate distance to both slab planes
     glm::vec3 t0 = (aabb.min - ray.origin) * invDir;
     glm::vec3 t1 = (aabb.max - ray.origin) * invDir;
 
+    // Ensure correct closer and farther plane
     glm::vec3 tmin = glm::min(t0, t1);
     glm::vec3 tmax = glm::max(t0, t1);
 
-    float tNear = glm::max(glm::max(tmin.x, tmin.y), tmin.z);
-    float tFar = glm::min(glm::min(tmax.x, tmax.y), tmax.z);
+    // Find the largest (near) and smallest (far) hit = looking for ray interval overlap in slabs
+    float tNear = glm::max(glm::max(tmin.x, tmin.y), tmin.z); // Entered all 3 slabs
+    float tFar = glm::min(glm::min(tmax.x, tmax.y), tmax.z); // Left atleast one slab
 
+    // Intersection
     if (tNear > tFar || tFar < 0.0f) {
-        return false; // No intersection
+        return false;
     }
 
+    // Distance to hit point
     t = (tNear < 0.0f) ? tFar : tNear;
     return true;
 }
 
 RayHit ShooterScene::raycast(const Ray& ray) {
+    // Prepare hit object
     RayHit result;
     result.hit = false;
     result.distance = std::numeric_limits<float>::max();
 
+    // Search through all targets
     for (size_t i = 0; i < spawned_models.size(); ++i) {
-        if (!spawned_models[i].active) continue;
+        if (!spawned_models[i].active) continue; // Skip inactive
 
+        // Get target AABB
         AABB bbox = spawned_models[i].getBoundingBox();
         float t;
 
+        // Check if closest hit
         if (ray_aabb_intersection(ray, bbox, t)) {
             if (t < result.distance) {
                 result.hit = true;
@@ -224,15 +240,18 @@ RayHit ShooterScene::raycast(const Ray& ray) {
 }
 
 void ShooterScene::shoot() {
+    // Create a ray
     Ray ray = create_ray_from_camera();
+
+    // Ray cast to find a hit
     RayHit hit = raycast(ray);
     // Play shooting sound
     audio_manager.play3D("shot", camera.Position.x, camera.Position.y, camera.Position.z);
-
+    
+    // Hit a target
     if (hit.hit && hit.modelIndex >= 0) {
-        // Hit a target
+        // Get the target
         Target& target = spawned_models[hit.modelIndex];
-
         // Deactivate the target
         target.active = false;
         target.timer = 0.0f;
