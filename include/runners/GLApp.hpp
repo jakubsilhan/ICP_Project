@@ -61,6 +61,7 @@ private:
 	bool fullscreen = false;
 
 	GLFWwindow* trackerWorkerWindow = nullptr;
+	int backupW, backupH, backupX, backupY;
 
 	// Models
 	std::unique_ptr<IScene> activeScene;

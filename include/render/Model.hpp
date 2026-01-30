@@ -11,7 +11,6 @@
 #include "assets/Mesh.hpp"
 #include "render/ShaderProgram.hpp"
 #include "render/Texture.hpp"
-#include "utils/OBJloader.hpp"
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/euler_angles.hpp>

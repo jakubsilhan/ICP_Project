@@ -27,6 +27,7 @@ void ShooterScene::init_assets() {
 
     // Load meshes
     mesh_library.emplace("cube", generate_cube(cube_atlas_cross));
+    mesh_library.emplace("cube_single", generate_cube(cube_atlas_single));
     mesh_library.emplace("sphere_highpoly", generate_sphere(8, 8));
 
     // Load textures
@@ -34,15 +35,15 @@ void ShooterScene::init_assets() {
     texture_library.emplace("wood_box", std::make_shared<Texture>("resources/textures/box_rgb888.png"));
     texture_library.emplace("wood_box_logos", std::make_shared<Texture>("resources/textures/wood_texture_cube_logos.png"));
     texture_library.emplace("globe", std::make_shared<Texture>("resources/textures/globe_texture.jpg"));
-    //texture_library.emplace("trex", std::make_shared<Texture>("resources/textures/trex_diff.png"));
+    texture_library.emplace("asteroid", std::make_shared<Texture>("resources/textures/asteroid_diffused.png"));
 
     // Load models
     Model teapot_flower_model = Model("resources/meshes/teapot_tri_vnt.obj", shader_library.at("texture_shader"), texture_library.at("yellow_flowers"));
     models.emplace("teapot_flower_object", std::move(teapot_flower_model));
     Model bunny_model = Model("resources/meshes/bunny_tri_vnt.obj", shader_library.at("simple_shader"));
     models.emplace("bunny_object", std::move(bunny_model));
-    /*Model trex_model = Model("resources/meshes/trex.obj", shader_library.at("texture_shader"), texture_library.at("trex"));
-    models.emplace("trex_object", std::move(trex_model));*/
+    Model asteroid_model = Model("resources/meshes/asteroid.obj", shader_library.at("texture_shader"), texture_library.at("asteroid"));
+    models.emplace("asteroid_object", std::move(asteroid_model));
 
     // Construct models
     Model wood_box_logos_model;
@@ -50,7 +51,7 @@ void ShooterScene::init_assets() {
     models.emplace("wood_box_logos_object", std::move(wood_box_logos_model));
 
     Model wood_box_model;
-    wood_box_logos_model.addMesh(mesh_library.at("cube"), shader_library.at("texture_shader"), texture_library.at("wood_box"));
+    wood_box_model.addMesh(mesh_library.at("cube_single"), shader_library.at("texture_shader"), texture_library.at("wood_box"));
     models.emplace("wood_box_object", std::move(wood_box_model));
 
     Model globe_model;
@@ -62,8 +63,8 @@ void ShooterScene::init_assets() {
         model_names.push_back(key);
 
     // Load audio
-    audio_manager.load("ping", "resources/sounds/ouch.wav", 0.5f, 10000.0f, 1.0f);
-    audio_manager.load("shot", "resources/sounds/step1.wav", 0.5f, 10000.0f, 1.0f);
+    audio_manager.load("ping", "resources/sounds/ping.wav", 0.5f, 10000.0f, 1.0f);
+    audio_manager.load("shot", "resources/sounds/gunshot.wav", 0.5f, 10000.0f, 1.0f);
     audio_manager.loadBGM("bgm", "resources/theme/03_E1M1_At_Doom's_Gate.mp3", 1.0f);
 
     //// Play BGM
@@ -74,7 +75,7 @@ void ShooterScene::init_assets() {
     spawn_models(1, "globe_object");
     spawn_models(1, "teapot_flower_object");
     spawn_models(1, "bunny_object");
-    //spawn_models(1, "trex_object");
+    spawn_models(1, "asteroid_object");
 }
 
 void ShooterScene::process_input(GLFWwindow* window, GLfloat deltaTime) {
@@ -287,6 +288,7 @@ void ShooterScene::on_key(int key, int action) {
             if (sm.active) {
                 glm::vec3 target_pos = sm.position;
                 audio_manager.play3D("ping", target_pos.x, target_pos.y, target_pos.z);
+                break;
             }
         }
         break;

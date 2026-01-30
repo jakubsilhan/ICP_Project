@@ -265,9 +265,14 @@ bool GLApp::run() {
         float current_frame_time = glfwGetTime();   // current time in seconds
         float delta_time = current_frame_time - last_frame_time; // lastFrame stored from previous frame
         last_frame_time = current_frame_time;
+
+        if (!sceneOn) {
+            delta_time = 0;
+        }
         //if (sceneOn && glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED) {
+        if (glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED) {
         activeScene->process_input(window, delta_time);
-        //}
+        }
 
         // Render scene - TODO revert
         //if (sceneOn) {
@@ -276,10 +281,8 @@ bool GLApp::run() {
         //}
 
         // display imgui
-        //if (imgui_on) {
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-        //}
 
         // Switch background and foreground buffers (rendering is always done in background first)
         glfwSwapBuffers(window);
@@ -454,6 +457,10 @@ void GLApp::glfw_key_callback(GLFWwindow* window, int key, int scancode, int act
         {
             this_inst->fullscreen = !this_inst->fullscreen;
             if (this_inst->fullscreen) {
+                // Save window data
+                glfwGetWindowPos(this_inst->window, &this_inst->backupX, &this_inst->backupY);
+                glfwGetWindowSize(this_inst->window, &this_inst->backupW, &this_inst->backupH);
+                // Fulscreen
                 GLFWmonitor* primary = glfwGetPrimaryMonitor();
                 const GLFWvidmode* mode = glfwGetVideoMode(primary);
                 glfwSetWindowMonitor(this_inst->window, primary,
@@ -462,11 +469,12 @@ void GLApp::glfw_key_callback(GLFWwindow* window, int key, int scancode, int act
             }
             else {
                 glfwSetWindowMonitor(this_inst->window, nullptr,
-                    100, 100, // position on screen
-                    this_inst->windowWidth,
-                    this_inst->windowHeight,
+                    this_inst->backupX, this_inst->backupY, // position on screen
+                    this_inst->backupW,
+                    this_inst->backupH,
                     0);
             }
+            break;
         }
         default:
                 this_inst->activeScene->on_key(key, action);
