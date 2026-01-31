@@ -241,8 +241,8 @@ bool GLApp::run() {
         }
         ImGui::End();
         if (imgui_full) {
-            ImGui::SetNextWindowPos(ImVec2(windowWidth-250, 10));
-            ImGui::SetNextWindowSize(ImVec2(250, 210));
+            ImGui::SetNextWindowPos(ImVec2(windowWidth-300-10, 10));
+            ImGui::SetNextWindowSize(ImVec2(300, 210));
             ImGui::Begin("Scene info", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
             activeScene->display_controls();
             ImGui::End();
