@@ -124,10 +124,19 @@ bool GLApp::init() {
     }
 
     // Get version info
-    std::string full_version = (const char*)glGetString(GL_VERSION);
-    std::stringstream ss(full_version);
-    ss >> gl_version_str;
-    ss >> gl_profile;
+    GLint gl_major_version = 0, gl_minor_version = 0;
+    glGetIntegerv(GL_MAJOR_VERSION, &gl_major_version);
+    glGetIntegerv(GL_MINOR_VERSION, &gl_minor_version);
+    gl_version = std::to_string(gl_major_version) + "." + std::to_string(gl_minor_version);
+    
+    // Get profile info
+    GLint gl_profile_mask = 0;
+    glGetIntegerv(GL_CONTEXT_PROFILE_MASK, &gl_profile_mask);
+    if (gl_profile_mask & GL_CONTEXT_CORE_PROFILE_BIT) {
+        gl_profile = "core";
+    } else if (gl_profile_mask & GL_CONTEXT_COMPATIBILITY_PROFILE_BIT) {
+        gl_profile = "compatibility";
+    }
     
     // Init tracking
     faceRecognizer.init();
@@ -228,7 +237,7 @@ bool GLApp::run() {
         ImGui::Text("V-Sync: %s", vsync_on ? "ON" : "OFF");
         ImGui::Text("Antialiasing %s", antialiasing_on ? "ON" : "OFF");
         ImGui::Text("FPS: %.1f", FPS_main.get());
-        ImGui::Text("GL Version: %s", gl_version_str.c_str());
+        ImGui::Text("GL Version: %s", gl_version.c_str());
         ImGui::Text("GL Profile: %s", gl_profile.c_str());
         ImGui::Text("Controls:");
         ImGui::Text("U - show/hide more info and camera");
