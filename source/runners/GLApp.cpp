@@ -218,7 +218,7 @@ bool GLApp::run() {
 
         // The info window
         ImGui::SetNextWindowPos(ImVec2(10, 10));
-        if (imgui_on) {
+        if (imgui_full) {
             ImGui::SetNextWindowSize(ImVec2(250, 220));
         }
         else {
@@ -233,7 +233,7 @@ bool GLApp::run() {
         ImGui::Text("Controls:");
         ImGui::Text("U - show/hide more info and camera");
 
-        if (imgui_on) {
+        if (imgui_full) {
             ImGui::Text("V - VSync on/off");
             ImGui::Text("T - Antialising on/off");
             ImGui::Text("P - take screenshot");
@@ -249,7 +249,7 @@ bool GLApp::run() {
 
         }
 
-        if (imgui_on) {
+        if (imgui_full) {
             // The camera window
             ImVec2 cameraSize((int)((float)cameraWidth / cameraHeight * 150), 150);
             ImGui::SetNextWindowPos(ImVec2(10, windowHeight - cameraSize[1] - 10));
@@ -429,8 +429,8 @@ void GLApp::glfw_key_callback(GLFWwindow* window, int key, int scancode, int act
             std::cout << "Antialiasing: " << this_inst->antialiasing_on << "\n";
             break;
         case GLFW_KEY_U: // UI toggle
-            this_inst->imgui_on = !this_inst->imgui_on;
-            std::cout << "ImGUI: " << this_inst->imgui_on << "\n";
+            this_inst->imgui_full = !this_inst->imgui_full;
+            std::cout << "ImGUI: " << this_inst->imgui_full << "\n";
             break;
         case GLFW_KEY_P: // Screenshot
             {

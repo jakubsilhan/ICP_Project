@@ -68,7 +68,7 @@ private:
 	bool sceneOn = false;
 
 	// ImGUI
-	bool imgui_on = true;
+	bool imgui_full = true;
 	std::string gl_version_str;
 	std::string gl_profile;
 	void show_crosshair();
