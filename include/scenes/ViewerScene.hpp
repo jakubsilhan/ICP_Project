@@ -26,6 +26,7 @@ public:
 
 	std::pair<double, double> get_last_cursor() override;
 
+	void on_mouse_button(int button, int action) override;
 	void on_key(int key, int action) override;
 	void on_mouse_move(double x, double y) override;
 	void on_scroll(double yoffset) override;

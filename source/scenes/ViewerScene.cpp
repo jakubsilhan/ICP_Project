@@ -39,10 +39,8 @@ void ViewerScene::init_assets() {
     texture_library.emplace("globe", std::make_shared<Texture>("resources/textures/globe_texture.jpg"));
 
     // Load models
-    Model triangle_model = Model("resources/meshes/triangle.obj", shader_library.at("simple_shader"));
     Model teapot_model = Model("resources/meshes/teapot_tri_vnt.obj", shader_library.at("simple_shader"));
     Model teapot_flower_model = Model("resources/meshes/teapot_tri_vnt.obj", shader_library.at("texture_shader"), texture_library.at("yellow_flowers"));
-    models.emplace("triangle_object", std::move(triangle_model));
     models.emplace("teapot_object", std::move(teapot_model));
     models.emplace("teapot_flower_object", std::move(teapot_flower_model));
 
@@ -151,6 +149,10 @@ void ViewerScene::update_shader_color() {
 #pragma endregion
 
 #pragma region Listeners
+void ViewerScene::on_mouse_button(int button, int action) {
+
+}
+
 void ViewerScene::on_key(int key, int action) {
     if (!this->enabled) return;
     

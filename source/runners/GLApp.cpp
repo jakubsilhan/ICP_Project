@@ -8,6 +8,7 @@
 #include "include/utils/GlDebugCallback.hpp"
 #include "utils/Screenshot.hpp"
 #include "scenes/ShooterScene.hpp"
+#include "scenes/ViewerScene.hpp"
 
 #include <fstream>
 #include <nlohmann/json.hpp> // JSON
@@ -159,7 +160,13 @@ bool GLApp::init() {
     };
 
     // Init scene
+    #ifdef SCENE_SHOOTER
     activeScene = std::make_unique<ShooterScene>(windowWidth, windowHeight);
+    #endif
+
+    #ifdef SCENE_VIEWER
+    activeScene = std::make_unique<ViewerScene>(windowWidth, windowHeight);
+    #endif
 
     return true;
 }

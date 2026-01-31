@@ -46,3 +46,22 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 )
 
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/resources/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/resources)
+
+set(RUN_MODE "GLAPP_SHOOTER" CACHE STRING "Which program entry to build")
+set_property(CACHE RUN_MODE PROPERTY STRINGS GLAPP_SHOOTER GLAPP_VIEWER TRACKAPP THREADTRACKAPP RASTERAPP)
+
+if (RUN_MODE STREQUAL "GLAPP_SHOOTER")
+    target_compile_definitions(${PROJECT_NAME} PRIVATE RUN_GLAPP)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE SCENE_SHOOTER)
+elseif (RUN_MODE STREQUAL "GLAPP_VIEWER")
+    target_compile_definitions(${PROJECT_NAME} PRIVATE RUN_GLAPP)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE SCENE_VIEWER)
+elseif (RUN_MODE STREQUAL "TRACKAPP")
+    target_compile_definitions(${PROJECT_NAME} PRIVATE RUN_TRACKAPP)
+elseif (RUN_MODE STREQUAL "THREADTRACKAPP")
+    target_compile_definitions(${PROJECT_NAME} PRIVATE RUN_THREADTRACKAPP)
+elseif (RUN_MODE STREQUAL "RASTERAPP")
+    target_compile_definitions(${PROJECT_NAME} PRIVATE RUN_RASTERAPP)
+else()
+    message(FATAL_ERROR "Invalid RUN_MODE: ${RUN_MODE}")
+endif()
