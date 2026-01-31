@@ -46,6 +46,18 @@ private:
         }
         return angle;
     }
+
+    void processNode(aiNode* node, const aiScene* scene, std::shared_ptr<ShaderProgram> shader, std::shared_ptr<Texture> texture = nullptr) {
+        // Process all meshes in node
+        for (unsigned int i = 0; i < node->mNumMeshes; i++) {
+            aiMesh* mesh = scene->mMeshes[node->mMeshes[i]]; // Get mesh from scene
+            addMesh(processMesh(mesh), shader, texture); // Convert to mesh and add to model
+         }
+        // Recursive walkthrough the model's tree
+        for (unsigned int i = 0; i < node->mNumChildren; i++) {
+            processNode(node->mChildren[i], scene, shader, texture);
+        }
+    }
 public:
     // mesh related data
     typedef struct mesh_package {
@@ -76,18 +88,6 @@ public:
 
         // Start recursive walkthrough the model's tree
         processNode(scene->mRootNode, scene, shader, texture);
-    }
-
-    void processNode(aiNode* node, const aiScene* scene, std::shared_ptr<ShaderProgram> shader, std::shared_ptr<Texture> texture = nullptr) {
-        // Process all meshes in node
-        for (unsigned int i = 0; i < node->mNumMeshes; i++) {
-            aiMesh* mesh = scene->mMeshes[node->mMeshes[i]]; // Get mesh from scene
-            addMesh(processMesh(mesh), shader, texture); // Convert to mesh and add to model
-         }
-        // Recursive walkthrough the model's tree
-        for (unsigned int i = 0; i < node->mNumChildren; i++) {
-            processNode(node->mChildren[i], scene, shader, texture);
-        }
     }
 
     std::shared_ptr<Mesh> processMesh(aiMesh* mesh) {
