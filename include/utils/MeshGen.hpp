@@ -9,22 +9,6 @@
 #include "assets/Mesh.hpp"
 #include "utils/Atlas.hpp"
 
-/*
-std::shared_ptr<Mesh> generate_cube() {
-    std::vector<Vertex> V{
-        {{1, 1, 0}}, // [00]
-        {{0, 1, 0}}, // [01]
-        {{1, 1, 1}}, // [02]
-        {{0, 1, 1}}, // [03]
-        {{1, 0, 0}}, // [04]
-        {{0, 0, 0}}, // [05]
-        {{0, 0, 1}}, // [06]
-        {{1, 0, 1}}, // [07]
-    };
-
-    std::vector<GLuint> I{ 0, 1, 4, 5, 6, 1, 3, 0, 2, 4, 7, 6, 2, 3 };
-    return std::make_shared<Mesh>(V, I, GL_TRIANGLE_STRIP);
-}*/
 
 inline Atlas cube_atlas_single{
     {
@@ -50,7 +34,7 @@ inline Atlas cube_atlas_cross{
     {4.0f,4.0f}
 };
 
-std::shared_ptr<Mesh> generate_cube(Atlas& atlas = cube_atlas_cross) {
+inline std::shared_ptr<Mesh> generate_cube(Atlas& atlas = cube_atlas_cross) {
 
     constexpr float u = 1.0f;
     constexpr float h = u / 2;
@@ -135,7 +119,7 @@ std::shared_ptr<Mesh> generate_cube(Atlas& atlas = cube_atlas_cross) {
 
 }
 
-std::shared_ptr<Mesh> generate_sphere(unsigned int sectors, unsigned int rings) {
+inline std::shared_ptr<Mesh> generate_sphere(unsigned int sectors, unsigned int rings) {
     std::vector<Vertex> V{};
     std::vector<GLuint> I{};
 

@@ -12,20 +12,58 @@
 #include "render/Model.hpp"
 #include "render/Texture.hpp"
 
-class ViewerScene : public IScene {
+struct Target {
+	Model* model = nullptr;
+	glm::vec3 position;		
+	float respawn_time;		// Seconds to respawn
+	float timer = 0.0f;		// Current countdown
+	bool active = true;		// Currently spawned or "dead"
+	float scale = 1.0f;		// For bounding box calculation
+	glm::vec3 velocity;		// Target movement
+	float maxSpeed = 5.0f;
+
+	AABB getBoundingBox() const {
+		AABB local = model->getLocalAABB();
+
+		glm::vec3 min = local.min * scale + position;
+		glm::vec3 max = local.max * scale + position;
+
+		return { min, max };
+	}
+};
+
+struct Ray {
+	// Ray for raycasting
+	glm::vec3 origin;
+	glm::vec3 direction;
+
+	glm::vec3 pointAt(float t) const {
+		return origin + direction * t;
+	}
+};
+
+struct RayHit {
+	// Hit detection
+	bool hit = false;
+	float distance = 0.0f;
+	glm::vec3 point;
+	int modelIndex = -1;
+};
+
+class ShooterScene : public IScene {
 public:
-	ViewerScene(int windowWidth, int windowHeight);
-
+	ShooterScene(int windowWidth, int windowHeight);
 	void init_assets() override;
-
 	void set_enabled(bool enabled) override;
 	void process_input(GLFWwindow* window, GLfloat deltaTime) override;
+
 	void update(float dt) override;
 	void render() override;
 	void display_controls() override;
 
 	std::pair<double, double> get_last_cursor() override;
 
+	void on_mouse_button(int button, int action);
 	void on_key(int key, int action) override;
 	void on_mouse_move(double x, double y) override;
 	void on_scroll(double yoffset) override;
@@ -63,4 +101,23 @@ private:
 	float fov = 60.0f;
 	glm::mat4 projection_matrix = glm::identity<glm::mat4>();
 	void update_projection_matrix();
+
+	// Targets
+	std::vector<Target> spawned_models;
+	void spawn_models(int count, const std::string& model_name);
+	float default_respawn_time = 5.0f;
+
+	// Shooting mechanics
+	Ray create_ray_from_camera();
+	RayHit raycast(const Ray& ray);
+	bool ray_aabb_intersection(const Ray& ray, const AABB& aabb, float& t);
+	void shoot();
+
+	// Bounds
+	AABB world_bounds{
+		glm::vec3(-25.0f, -10.0f, -25.0f),
+		glm::vec3(25.0f,  10.0f,  25.0f)
+	};
+	glm::vec3 clamp_to_bounds(const glm::vec3& p, const AABB& b);
+	glm::vec3 random_position_in_bounds();
 };

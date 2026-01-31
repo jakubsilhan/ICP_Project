@@ -1,5 +1,9 @@
 #include <algorithm>
 
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
+
 #include "scenes/ViewerScene.hpp"
 #include "render/Model.hpp"
 #include "utils/Camera.hpp"
@@ -72,7 +76,7 @@ void ViewerScene::init_assets() {
         model_names.push_back(key);
 
     // Load audio
-    audio_manager.load("ouch", "resources/sounds/ouch.wav", 0.5f, 10000.0f, 1.0f);
+    audio_manager.load("ping", "resources/sounds/ping.wav", 0.5f, 10000.0f, 1.0f);
     audio_manager.loadBGM("bgm", "resources/theme/03_E1M1_At_Doom's_Gate.mp3", 1.0f);
     //audio_manager.load("step1", "resources/sounds/step1.wav");
     //audio_manager.load("step2", "resources/sounds/step2.wav");
@@ -81,7 +85,13 @@ void ViewerScene::init_assets() {
     audio_manager.playBGM("bgm", 0.2f);
 }
 
+void ViewerScene::set_enabled(bool enabled) {
+    this->enabled = enabled;
+}
+
 void ViewerScene::process_input(GLFWwindow* window, GLfloat deltaTime) {
+    if (!this->enabled) return;
+
     camera.ProcessInput(window, deltaTime);
 }
 
@@ -90,11 +100,6 @@ void ViewerScene::update(float dt) {
 }
 
 void ViewerScene::render() {
-    // All models
-    /*for (auto& [name, model] : models) {
-        model.draw();
-    }*/
-
     // Update listener location and clear sounds
     audio_manager.setListenerPosition(camera.Position.x, camera.Position.y, camera.Position.z, camera.Front.x, camera.Front.y, camera.Front.z);
     audio_manager.cleanFinishedSounds();
@@ -102,6 +107,21 @@ void ViewerScene::render() {
     // Model selection
     Model& model = models[model_names[selected_model]];
     model.draw(camera.GetViewMatrix(), projection_matrix);
+}
+
+void ViewerScene::display_controls() {
+    ImGui::Text("Controls:");
+        ImGui::Text("X - Reset camera");
+        ImGui::Text("E - switch color");
+        ImGui::Text("Q - switch model");
+        ImGui::Text("P - take screenshot");
+        ImGui::Text("H - play sound");
+        ImGui::Text("Scroll - scale model");
+        ImGui::Text("Movement:");
+        ImGui::Text("Enter Movement Mode - Left Click");
+        ImGui::Text("Exit Movement Mode - Right Click");
+        ImGui::Text("Movement - WASD + Space + C");
+        ImGui::Text("Speed Boost - Left Shift");
 }
 
 #pragma region Utils
@@ -132,6 +152,8 @@ void ViewerScene::update_shader_color() {
 
 #pragma region Listeners
 void ViewerScene::on_key(int key, int action) {
+    if (!this->enabled) return;
+    
     if (action != GLFW_PRESS) return;
     switch (key) {
     case GLFW_KEY_E:
@@ -146,7 +168,7 @@ void ViewerScene::on_key(int key, int action) {
     case GLFW_KEY_H: {
         auto m_pos = models[model_names[selected_model]].getPosition();
         audio_manager.play3D(
-            "ouch",           // name
+            "ping",           // name
             m_pos.x, m_pos.y, m_pos.z // Sound Source Position
         );
     }
@@ -157,12 +179,17 @@ void ViewerScene::on_key(int key, int action) {
 }
 
 void ViewerScene::on_mouse_move(double x, double y) {
-    camera.ProcessMouseMovement(x - cursorLastX, (y - cursorLastY) * -1.0);
+    if (this->enabled) {
+        camera.ProcessMouseMovement(x - cursorLastX, (y - cursorLastY) * -1.0);
+    }
+
     cursorLastX = x;
     cursorLastY = y;
 }
 
 void ViewerScene::on_scroll(double offset) {
+    if (!this->enabled) return;
+
     fov -= 10 * offset;
     fov = std::clamp(fov, 10.0f, 170.0f); // limit FOV to reasonable values
 

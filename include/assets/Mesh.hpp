@@ -10,6 +10,28 @@
 #include "assets/Vertex.hpp"
 #include "utils/NonCopyable.hpp"
 
+struct AABB {
+    glm::vec3 min;
+    glm::vec3 max;
+
+    // Check if a point is inside the AABB
+    bool contains(const glm::vec3& point) const {
+        return point.x >= min.x && point.x <= max.x &&
+            point.y >= min.y && point.y <= max.y &&
+            point.z >= min.z && point.z <= max.z;
+    }
+
+    // Center of AABB
+    glm::vec3 center() const {
+        return (min + max) * 0.5f;
+    }
+
+    // Get half-extents of AABB
+    glm::vec3 halfExtents() const {
+        return (max - min) * 0.5f;
+    }
+};
+
 class Mesh : private NonCopyable
 {
 public:
@@ -27,6 +49,16 @@ public:
     // Simple mesh from vertices
     Mesh(std::vector<Vertex> const& vertices, GLenum primitive_type) : primitive_type_{ primitive_type }
     {
+        // Calculate bounding box
+        localAABB_.min = vertices[0].position;
+        localAABB_.max = vertices[0].position;
+
+        for (const auto& v : vertices) {
+            localAABB_.min = glm::min(localAABB_.min, v.position);
+            localAABB_.max = glm::max(localAABB_.max, v.position);
+        }
+
+        // OpenGL setup
         glCreateVertexArrays(1, &vao_);
 
         glVertexArrayAttribFormat(vao_, attribute_location_position, glm::vec3::length(), GL_FLOAT, GL_FALSE, offsetof(Vertex, position));
@@ -76,6 +108,8 @@ public:
         }
     }
 
+    const AABB& getLocalAABB() const { return localAABB_; }
+
     ~Mesh() {
         glDeleteBuffers(1, &ebo_);
         glDeleteBuffers(1, &vbo_);
@@ -91,6 +125,9 @@ private:
     GLuint vao_{ 0 };
     GLuint vbo_{ 0 };
     GLuint ebo_{ 0 };
+
+    // Bounding box
+    AABB localAABB_;
 };
 
 

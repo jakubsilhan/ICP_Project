@@ -85,6 +85,13 @@ bool AudioManager::play3D(const std::string& name, float sound_x, float sound_y,
 	return true;
 }
 
+void AudioManager::changeVolume(double change) {
+	auto volume = ma_sound_get_volume(current_bgm.get());
+	volume = volume + change*0.05f;
+	volume = std::clamp(volume, 0.0f, 1.0f);
+	ma_sound_set_volume(current_bgm.get(), volume);
+}
+
 void AudioManager::setListenerPosition(float x, float y, float z, float dirX, float dirY, float dirZ) {
 	ma_engine_listener_set_position(&engine, 0, x, y, z);
 	ma_engine_listener_set_direction(&engine, 0, dirX, dirY, dirZ);

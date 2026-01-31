@@ -7,6 +7,7 @@
 #include "render/SyncedTexture.hpp"
 #include "include/utils/GlDebugCallback.hpp"
 #include "utils/Screenshot.hpp"
+#include "scenes/ShooterScene.hpp"
 
 #include <fstream>
 #include <nlohmann/json.hpp> // JSON
@@ -121,6 +122,21 @@ bool GLApp::init() {
     if (!init_imgui()) {
         return false;
     }
+
+    // Get version info
+    GLint gl_major_version = 0, gl_minor_version = 0;
+    glGetIntegerv(GL_MAJOR_VERSION, &gl_major_version);
+    glGetIntegerv(GL_MINOR_VERSION, &gl_minor_version);
+    gl_version = std::to_string(gl_major_version) + "." + std::to_string(gl_minor_version);
+    
+    // Get profile info
+    GLint gl_profile_mask = 0;
+    glGetIntegerv(GL_CONTEXT_PROFILE_MASK, &gl_profile_mask);
+    if (gl_profile_mask & GL_CONTEXT_CORE_PROFILE_BIT) {
+        gl_profile = "core";
+    } else if (gl_profile_mask & GL_CONTEXT_COMPATIBILITY_PROFILE_BIT) {
+        gl_profile = "compatibility";
+    }
     
     // Init tracking
     faceRecognizer.init();
@@ -143,7 +159,7 @@ bool GLApp::init() {
     };
 
     // Init scene
-    activeScene = std::make_unique<ViewerScene>(windowWidth, windowHeight);
+    activeScene = std::make_unique<ShooterScene>(windowWidth, windowHeight);
 
     return true;
 }
@@ -200,41 +216,53 @@ bool GLApp::run() {
         const RecognizedData& recognizedData = currentRecognizedData ? *currentRecognizedData : defaultRecognizedData;
 
         // Process recognized data
-        sceneOn = (recognizedData.faces.size() == 1);
+        activeScene->set_enabled(recognizedData.faces.size() == 1);
 
         // Prepare imgui render
-        if (imgui_on) {
-            ImGui_ImplOpenGL3_NewFrame();
-            ImGui_ImplGlfw_NewFrame();
-            ImGui::NewFrame();
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
 
-            // The info window
-            ImGui::SetNextWindowPos(ImVec2(10, 10));
-            ImGui::SetNextWindowSize(ImVec2(250, 270));
-            ImGui::Begin("Info", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
-            ImGui::Text("V-Sync: %s", vsync_on ? "ON" : "OFF");
-            ImGui::Text("Antialiasing %s", antialiasing_on ? "ON" : "OFF");
-            ImGui::Text("FPS: %.1f", FPS_main.get());
-            ImGui::Text("Controls:");
+        show_crosshair();
+
+        // The info window
+        ImGui::SetNextWindowPos(ImVec2(10, 10));
+        if (imgui_full) {
+            ImGui::SetNextWindowSize(ImVec2(250, 220));
+        }
+        else {
+            ImGui::SetNextWindowSize(ImVec2(250, 150));
+        }
+        ImGui::Begin("Info", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
+        ImGui::Text("V-Sync: %s", vsync_on ? "ON" : "OFF");
+        ImGui::Text("Antialiasing %s", antialiasing_on ? "ON" : "OFF");
+        ImGui::Text("FPS: %.1f", FPS_main.get());
+        ImGui::Text("GL Version: %s", gl_version.c_str());
+        ImGui::Text("GL Profile: %s", gl_profile.c_str());
+        ImGui::Text("Controls:");
+        ImGui::Text("U - show/hide more info and camera");
+
+        if (imgui_full) {
             ImGui::Text("V - VSync on/off");
             ImGui::Text("T - Antialising on/off");
-            ImGui::Text("U - show/hide the HUD");
-            ImGui::Text("X - Reset camera");
-            ImGui::Text("E - switch color");
-            ImGui::Text("Q - switch model");
             ImGui::Text("P - take screenshot");
-            ImGui::Text("Scroll - scale model");
-            ImGui::Text("Movement:");
-            ImGui::Text("Enter Movement Mode - Left Click");
-            ImGui::Text("Exit Movement Mode - Right Click");
-            ImGui::Text("Movement - WASD + Space + C");
-            ImGui::Text("Speed Boost - Left Shift");
+            ImGui::Text("F11 - Fullscreen/Windowed");
+        }
+        ImGui::End();
+        if (imgui_full) {
+            ImGui::SetNextWindowPos(ImVec2(windowWidth-300-10, 10));
+            ImGui::SetNextWindowSize(ImVec2(300, 210));
+            ImGui::Begin("Scene info", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
+            activeScene->display_controls();
             ImGui::End();
 
+        }
+
+        if (imgui_full) {
             // The camera window
-            ImVec2 cameraSize((int)((float)cameraWidth/cameraHeight*150), 150);
-            ImGui::SetNextWindowPos(ImVec2(10, windowHeight-cameraSize[1]-10));
-            ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0,0));
+            ImVec2 cameraSize((int)((float)cameraWidth / cameraHeight * 150), 150);
+            ImGui::SetNextWindowPos(ImVec2(10, windowHeight - cameraSize[1] - 10));
+            ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
             ImGui::SetNextWindowSize(cameraSize);
             ImGui::Begin("Camera", nullptr, ImGuiWindowFlags_NoDecoration);
             ImGui::Image((ImTextureID)(intptr_t)recognizedData.frame->get_name(), cameraSize, ImVec2(0, 1), ImVec2(1, 0));
@@ -249,20 +277,20 @@ bool GLApp::run() {
         float current_frame_time = glfwGetTime();   // current time in seconds
         float delta_time = current_frame_time - last_frame_time; // lastFrame stored from previous frame
         last_frame_time = current_frame_time;
-        if (sceneOn && glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED) {
+
+        if (glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED) {
             activeScene->process_input(window, delta_time);
         }
 
+        // Update scene
+        activeScene->update(delta_time);
+
         // Render scene
-        if (sceneOn) {
-            activeScene->render();
-        }
+        activeScene->render();
 
         // display imgui
-        if (imgui_on) {
-            ImGui::Render();
-            ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-        }
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
         // Switch background and foreground buffers (rendering is always done in background first)
         glfwSwapBuffers(window);
@@ -366,6 +394,7 @@ void GLApp::glfw_mouse_button_callback(GLFWwindow* window, int button, int actio
                 }
                 else {
                     // we are already inside our game: shoot, click, etc.
+                    this_inst->activeScene->on_mouse_button(button, action);
                     std::cout << "Bang!\n";
                 }
                 break;
@@ -386,18 +415,15 @@ void GLApp::glfw_key_callback(GLFWwindow* window, int key, int scancode, int act
     auto this_inst = static_cast<GLApp*>(glfwGetWindowUserPointer(window));
     if ((action == GLFW_PRESS) || (action == GLFW_REPEAT)) {
         switch (key) {
-        case GLFW_KEY_ESCAPE:
-            // Exit The App
+        case GLFW_KEY_ESCAPE: // Exit The App
             glfwSetWindowShouldClose(window, GLFW_TRUE);
             break;
-        case GLFW_KEY_V:
-            // Vsync on/off
+        case GLFW_KEY_V: // Vsync on/off
             this_inst->vsync_on = !this_inst->vsync_on;
             glfwSwapInterval(this_inst->vsync_on);
             std::cout << "VSync: " << this_inst->vsync_on << "\n";
             break;
-        case GLFW_KEY_T:
-            // Antialiasing on/off
+        case GLFW_KEY_T: // Antialiasing on/off
             if (this_inst->antialiasing_on) {
                 glDisable(GL_MULTISAMPLE);
             }
@@ -407,11 +433,11 @@ void GLApp::glfw_key_callback(GLFWwindow* window, int key, int scancode, int act
             this_inst->antialiasing_on = !this_inst->antialiasing_on;
             std::cout << "Antialiasing: " << this_inst->antialiasing_on << "\n";
             break;
-        case GLFW_KEY_U:
-            this_inst->imgui_on = !this_inst->imgui_on;
-            std::cout << "ImGUI: " << this_inst->imgui_on << "\n";
+        case GLFW_KEY_U: // UI toggle
+            this_inst->imgui_full = !this_inst->imgui_full;
+            std::cout << "ImGUI: " << this_inst->imgui_full << "\n";
             break;
-        case GLFW_KEY_P:
+        case GLFW_KEY_P: // Screenshot
             {
                 auto filterPatterns = std::array{ "*.png" }; 
                 const char * path = tinyfd_saveFileDialog(
@@ -432,6 +458,29 @@ void GLApp::glfw_key_callback(GLFWwindow* window, int key, int scancode, int act
                 std::cout << "Saved screenshot to: " << path << std::endl;
             }
             break;
+        case GLFW_KEY_F11: // Toggle fullscreen
+        {
+            this_inst->fullscreen = !this_inst->fullscreen;
+            if (this_inst->fullscreen) {
+                // Save window data
+                glfwGetWindowPos(this_inst->window, &this_inst->backupX, &this_inst->backupY);
+                glfwGetWindowSize(this_inst->window, &this_inst->backupW, &this_inst->backupH);
+                // Fulscreen
+                GLFWmonitor* primary = glfwGetPrimaryMonitor();
+                const GLFWvidmode* mode = glfwGetVideoMode(primary);
+                glfwSetWindowMonitor(this_inst->window, primary,
+                    0, 0, mode->width, mode->height,
+                    mode->refreshRate);
+            }
+            else {
+                glfwSetWindowMonitor(this_inst->window, nullptr,
+                    this_inst->backupX, this_inst->backupY, // position on screen
+                    this_inst->backupW,
+                    this_inst->backupH,
+                    0);
+            }
+            break;
+        }
         default:
                 this_inst->activeScene->on_key(key, action);
             break;
@@ -458,6 +507,21 @@ void GLApp::glfw_cursor_position_callback(GLFWwindow* window, double xpos, doubl
 }
 
 
+#pragma endregion
+
+#pragma region Imgui
+void GLApp::show_crosshair() {
+    int windowWidth, windowHeight;
+    glfwGetFramebufferSize(window, &windowWidth, &windowHeight);
+
+    ImDrawList* draw_list = ImGui::GetForegroundDrawList();
+    float centerX = windowWidth * 0.5f;
+    float centerY = windowHeight * 0.5f;
+    float size = 10.0f; // half-length in pixels
+
+    draw_list->AddLine(ImVec2(centerX - size, centerY), ImVec2(centerX + size, centerY), IM_COL32(255, 255, 255, 255), 2.0f); // horizontal
+    draw_list->AddLine(ImVec2(centerX, centerY - size), ImVec2(centerX, centerY + size), IM_COL32(255, 255, 255, 255), 2.0f); // vertical
+}
 #pragma endregion
 
 GLApp::~GLApp()

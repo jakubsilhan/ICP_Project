@@ -1,3 +1,5 @@
+#pragma once
+
 #include "audio/Miniaudio.h"
 #include "utils/NonCopyable.hpp"
 #include <unordered_map>
@@ -16,6 +18,7 @@ public:
 	bool play3D(const std::string& name, float soundX, float soundY, float soundZ);
 	bool playBGM(const std::string& name, float volume);
 	void stopBGM();
+	void changeVolume(double change);
 	void setListenerPosition(float x, float y, float z, float dirX, float dirY, float dirZ);
 	void cleanFinishedSounds();
 
@@ -26,5 +29,4 @@ private:
 	std::unordered_map<std::string, std::unique_ptr<ma_sound>> bgm_bank;
 	std::vector<std::unique_ptr<ma_sound>> active_sounds;
 	std::unique_ptr<ma_sound> current_bgm;
-	//static void my_end_callback(void* pUserData, ma_sound* pSound);
 };
