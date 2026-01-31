@@ -79,12 +79,20 @@ void ShooterScene::init_assets() {
     spawn_models(1, "asteroid_object");
 }
 
+void ShooterScene::set_enabled(bool enabled) {
+    this->enabled = enabled;
+}
+
 void ShooterScene::process_input(GLFWwindow* window, GLfloat deltaTime) {
+    if (!this->enabled) return;
+
     camera.ProcessInput(window, deltaTime);
     camera.Position = clamp_to_bounds(camera.Position, world_bounds);
 }
 
 void ShooterScene::update(float dt) {
+    if (!this->enabled) return;
+
     // Respawn
     for (auto& sm : spawned_models) {
         if (!sm.active) {
@@ -294,6 +302,8 @@ glm::vec3 ShooterScene::random_position_in_bounds() {
 
 #pragma region Listeners
 void ShooterScene::on_key(int key, int action) {
+    if (!this->enabled) return;
+
     if (action != GLFW_PRESS) return;
     switch (key) {
     case GLFW_KEY_E:
@@ -317,13 +327,19 @@ void ShooterScene::on_key(int key, int action) {
 }
 
 void ShooterScene::on_mouse_button(int button, int action) {
+    if (!this->enabled) return;
+
     if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
         shoot();
     }
 }
 
 void ShooterScene::on_mouse_move(double x, double y) {
-    camera.ProcessMouseMovement(x - cursorLastX, (y - cursorLastY) * -1.0);
+
+    if (this->enabled) {
+        camera.ProcessMouseMovement(x - cursorLastX, (y - cursorLastY) * -1.0);
+    }
+
     cursorLastX = x;
     cursorLastY = y;
 }

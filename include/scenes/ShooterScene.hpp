@@ -54,6 +54,7 @@ class ShooterScene : public IScene {
 public:
 	ShooterScene(int windowWidth, int windowHeight);
 	void init_assets() override;
+	void set_enabled(bool enabled) override;
 	void process_input(GLFWwindow* window, GLfloat deltaTime) override;
 
 	void update(float dt) override;
@@ -69,6 +70,9 @@ public:
 	void on_resize(int width, int height) override;
 
 private:
+	// Global state
+	bool enabled = false;
+
 	// Camera
 	Camera camera;
 	double cursorLastX{ 0 };

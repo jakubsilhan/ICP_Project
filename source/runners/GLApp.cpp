@@ -216,7 +216,7 @@ bool GLApp::run() {
         const RecognizedData& recognizedData = currentRecognizedData ? *currentRecognizedData : defaultRecognizedData;
 
         // Process recognized data
-        sceneOn = (recognizedData.faces.size() == 1);
+        activeScene->set_enabled(recognizedData.faces.size() == 1);
 
         // Prepare imgui render
         ImGui_ImplOpenGL3_NewFrame();
@@ -278,19 +278,15 @@ bool GLApp::run() {
         float delta_time = current_frame_time - last_frame_time; // lastFrame stored from previous frame
         last_frame_time = current_frame_time;
 
-        if (!sceneOn) {
-            delta_time = 0;
-        }
-        //if (sceneOn && glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED) {
         if (glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED) {
-        activeScene->process_input(window, delta_time);
+            activeScene->process_input(window, delta_time);
         }
 
-        // Render scene - TODO revert
-        //if (sceneOn) {
+        // Update scene
         activeScene->update(delta_time);
+
+        // Render scene
         activeScene->render();
-        //}
 
         // display imgui
         ImGui::Render();

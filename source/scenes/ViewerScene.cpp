@@ -85,7 +85,13 @@ void ViewerScene::init_assets() {
     audio_manager.playBGM("bgm", 0.2f);
 }
 
+void ViewerScene::set_enabled(bool enabled) {
+    this->enabled = enabled;
+}
+
 void ViewerScene::process_input(GLFWwindow* window, GLfloat deltaTime) {
+    if (!this->enabled) return;
+
     camera.ProcessInput(window, deltaTime);
 }
 
@@ -146,6 +152,8 @@ void ViewerScene::update_shader_color() {
 
 #pragma region Listeners
 void ViewerScene::on_key(int key, int action) {
+    if (!this->enabled) return;
+    
     if (action != GLFW_PRESS) return;
     switch (key) {
     case GLFW_KEY_E:
@@ -171,12 +179,17 @@ void ViewerScene::on_key(int key, int action) {
 }
 
 void ViewerScene::on_mouse_move(double x, double y) {
-    camera.ProcessMouseMovement(x - cursorLastX, (y - cursorLastY) * -1.0);
+    if (this->enabled) {
+        camera.ProcessMouseMovement(x - cursorLastX, (y - cursorLastY) * -1.0);
+    }
+
     cursorLastX = x;
     cursorLastY = y;
 }
 
 void ViewerScene::on_scroll(double offset) {
+    if (!this->enabled) return;
+
     fov -= 10 * offset;
     fov = std::clamp(fov, 10.0f, 170.0f); // limit FOV to reasonable values
 

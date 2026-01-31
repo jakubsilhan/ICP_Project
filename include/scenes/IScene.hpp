@@ -9,6 +9,7 @@ public:
 
     virtual void init_assets() = 0;
 
+    virtual void set_enabled(bool enabled) = 0;
     virtual void process_input(GLFWwindow* window, GLfloat deltaTime) = 0;
     virtual void update(float dt) = 0;
     virtual void render() = 0;
