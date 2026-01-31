@@ -240,7 +240,7 @@ bool GLApp::run() {
             ImGui::Text("F11 - Fullscreen/Windowed");
         }
         ImGui::End();
-        if (imgui_on) {
+        if (imgui_full) {
             ImGui::SetNextWindowPos(ImVec2(windowWidth-250, 10));
             ImGui::SetNextWindowSize(ImVec2(250, 210));
             ImGui::Begin("Scene info", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
