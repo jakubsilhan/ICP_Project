@@ -51,9 +51,9 @@ The build an run on Kubuntu 24.04 LTS:
          git clone https://github.com/jakubsilhan/ICP_Project.git
          cd ICP_Project
 
-  4. Configure build:
-
-         cmake -B build
+  4. Configure the build:
+   
+         cmake --preset default
 
   5. Build the executable:
 
@@ -71,26 +71,26 @@ The app displays the available actions using its GUI.
 
 
 ### Building and running with other entry points
-There are also other entry points available, specified by the `RUN_MODE` CMake option.
-The following entry points are available:
+There are also other entry points available, specified by CMake preset used.
+The following presets are available:
 
-  - `GLAPP_SHOOTER` - the default shooter game (the default)
-  - `GLAPP_VIEWER` - the default app but with `ViewerScene` instead of `ShooterScene` (the functionality out of the scene is the same like `GLAPP_SHOOTER`)
-  - `TRACKAPP` - a simple camera tracker app using OpenCV
-  - `THREADTRACKAPP` - a threaded camera tracker app using OpenCV + an OpenGL window with triangle
-  - `RASTERAPP` - a simple raster processing app (video encoder)
+  - `Shooter` - the default shooter game (the default)
+  - `Raster` - a simple raster processing app (video encoder)
+  - `Viewer` - the default app but with `ViewerScene` instead of `ShooterScene` (the functionality out of the scene is the same like `GLAPP_SHOOTER`)
+  - `TrackApp` - a simple camera tracker app using OpenCV
+  - `ThreadTrackApp` - a threaded camera tracker app using OpenCV + an OpenGL window with triangle
 
 To build and run with other entry points:
 
-  1. Make sure you have gone through the general build and run steps 1 through 4.
+  1. Make sure you have gone through the general build and run steps 1 through 3.
 
-  2. Configure build:
+  2. Configure the build:
 
-         cmake -B build -DRUN_MODE=<RUN_MODE>
+         cmake --preset <preset>
 
-     where `RUN_MODE` is the chosen mode.
+     where `preset` is the chosen preset.
 
-  3. Build the executable:
+  5. Build the executable:
 
          cmake --build build
 
@@ -99,4 +99,4 @@ To build and run with other entry points:
          build/icp
 
 > [!NOTE]
-> In order to revert to the default entry point after building a different one, you need to follow the above steps with `RUN_MODE` set to `GLAPP_SHOOTER`, otherwise the last mode stays active.
+> In order to revert to the default entry point after building a different one, you need to follow the above steps with `preset` set to `Shooter`, otherwise the last mode stays active.
