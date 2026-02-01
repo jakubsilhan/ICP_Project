@@ -10,18 +10,52 @@
       }
     },
     {
-      "name": "release",
+      "name": "Shooter",
       "inherits": "default",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release"
+        "CMAKE_BUILD_TYPE": "Release",
+        "RUN_MODE": "GLAPP_SHOOTER"
       }
     },
     {
-      "name": "debug",
+      "name": "Debug",
       "inherits": "default",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug"
+        "CMAKE_BUILD_TYPE": "Debug",
+        "RUN_MODE": "GLAPP_SHOOTER"
       }
-    }
+    },
+    {
+      "name": "Raster",
+      "inherits": "default",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "RUN_MODE": "RASTERAPP"
+      }
+    },
+    {
+      "name": "Viewer",
+      "inherits": "default",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "RUN_MODE": "GLAPP_VIEWER"
+      }
+    },
+    {
+      "name": "TrackApp",
+      "inherits": "default",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "RUN_MODE": "TRACKAPP"
+      }
+    },
+    {
+      "name": "ThreadTrackApp",
+      "inherits": "default",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "RUN_MODE": "THREADTRACKAPP"
+      }
+    }      
   ]
 }
