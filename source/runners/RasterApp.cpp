@@ -107,7 +107,6 @@ std::vector<uchar> RasterApp::lossy_quality_limit(const cv::Mat& frame, const fl
 int RasterApp::run(void) {
     cv::Mat frame;
     std::vector<uchar> bytes;
-    float target_coefficient = 1.0f; // used as size-ratio, or quality-coefficient
     try {
         while (capture.isOpened())
         {
@@ -142,6 +141,7 @@ int RasterApp::run(void) {
             //  
             cv::Mat decoded_frame = cv::imdecode(bytes, cv::IMREAD_ANYCOLOR);
 
+            draw_controls(frame);
             cv::namedWindow("original");
             cv::imshow("original", frame);
 
@@ -179,6 +179,27 @@ int RasterApp::run(void) {
 
     std::cout << "Finished OK...\n";
     return EXIT_SUCCESS;
+}
+
+void RasterApp::draw_controls(cv::Mat& frame) {
+    std::vector<std::string> controls = {
+        "Controls:",
+        "Q - Increase coefficient",
+        "A - Decrease coefficient",
+        "E - Toggle mode (Bandwidth/Quality)",
+        "ESC - Exit",
+        "",
+        "Mode: " + std::string(bandwidth ? "Bandwidth" : "Quality"),
+        "Coefficient: " + std::to_string(int(target_coefficient * 100)) + "%"
+    };
+
+    int y = 30;
+    for (const auto& line : controls) {
+        cv::putText(frame, line, cv::Point(10, y),
+            cv::FONT_HERSHEY_SIMPLEX, 0.6,
+            cv::Scalar(0, 255, 0), 2);
+        y += 25;
+    }
 }
 
 RasterApp::~RasterApp() {
