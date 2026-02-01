@@ -15,8 +15,11 @@ public:
 
     int run(void);
 
+    void draw_controls(cv::Mat& frame);
+
     ~RasterApp();
 private:
     cv::VideoCapture capture;
+    float target_coefficient = 1.0f;
     bool bandwidth=false;
 };
