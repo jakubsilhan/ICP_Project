@@ -63,6 +63,13 @@ The build an run on Kubuntu 24.04 LTS:
 
          build/icp
 
+The app displays the available actions using its GUI.
+
+> [!NOTE]
+> When taking screenshots, the file save dialog API does not select the file mask on Kubuntu 24.04,
+> whereas on later versions it works correctly. Please choose the `.png` filename extension when naming the screenshot.
+
+
 ### Building and running with other entry points
 There are also other entry points available, specified by the `RUN_MODE` CMake option.
 The following entry points are available:
