@@ -3,7 +3,13 @@
 #include <GL/glew.h>
 #include <opencv2/opencv.hpp>
 
-bool makeScreenshot(const char * path, const GLint x, const GLint y, const GLsizei width, const GLsizei height) {
+#include "utils/PathUtils.hpp"
+
+bool make_screenshot(const char * path, const GLint x, const GLint y, const GLsizei width, const GLsizei height) {
+
+    if (!ends_with_ext(path, ".png")) {
+        return false;
+    }
 
     // Make the GLubyte array
     std::vector<GLubyte> pixels(width * height * 3); // 3 for RGB
