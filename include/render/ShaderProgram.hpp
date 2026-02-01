@@ -5,7 +5,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include <GL/glew.h> 
+#include <GL/glew.h>
 #include <glm/glm.hpp>
 
 #include "utils/NonCopyable.hpp"
@@ -44,20 +44,20 @@ public:
         ID = 0;
     }
     
-    GLuint getID(void) { return ID; }
-    GLint  getAttribLocation(const std::string & name);
+    GLuint get_ID(void) { return ID; }
+    GLint  get_attrib_location(const std::string & name);
     
     // set uniform according to name 
     // https://docs.gl/gl4/glUniform
-    void setUniform(const std::string & name, const GLfloat val);      
-    void setUniform(const std::string & name, const GLint val);        
-    void setUniform(const std::string & name, const glm::vec3 & val);  
-    void setUniform(const std::string & name, const glm::vec4 & val);  
-    void setUniform(const std::string & name, const glm::mat3 & val);   
-    void setUniform(const std::string & name, const glm::mat4 & val);
-    void setUniform(const std::string & name, const std::vector<GLint> & val);
-    void setUniform(const std::string & name, const std::vector<GLfloat> & val);
-    void setUniform(const std::string & name, const std::vector<glm::vec3> & val);
+    void set_uniform(const std::string & name, const GLfloat val);      
+    void set_uniform(const std::string & name, const GLint val);        
+    void set_uniform(const std::string & name, const glm::vec3 & val);  
+    void set_uniform(const std::string & name, const glm::vec4 & val);  
+    void set_uniform(const std::string & name, const glm::mat3 & val);   
+    void set_uniform(const std::string & name, const glm::mat4 & val);
+    void set_uniform(const std::string & name, const std::vector<GLint> & val);
+    void set_uniform(const std::string & name, const std::vector<GLfloat> & val);
+    void set_uniform(const std::string & name, const std::vector<glm::vec3> & val);
 
 
 private:
@@ -65,9 +65,9 @@ private:
     inline static GLuint currently_used_ID{0};
     std::unordered_map<std::string, GLuint> uniform_location_cache;
 
-    GLuint getUniformLocation(const std::string & name);
+    GLuint get_uniform_location(const std::string & name);
 
-    std::string textFileRead(const std::filesystem::path & filename); // load text file
+    std::string text_file_read(const std::filesystem::path & filename); // load text file
 
     GLuint compile_shader(const std::string & source_code, const GLenum type); 
     std::string getShaderInfoLog(const GLuint obj);    
@@ -75,4 +75,3 @@ private:
     GLuint link_shader(const std::vector<GLuint> shader_ids); 
     std::string getProgramInfoLog(const GLuint obj);      
 };
-

@@ -1,3 +1,8 @@
+#include <iostream>
+#include <vector>
+
+#include <opencv2/opencv.hpp>
+
 #include "include/recognizers/FaceRecognizer.hpp"
 #include "include/render/Drawings.hpp"
 
@@ -17,13 +22,13 @@ bool FaceRecognizer::init() {
 int FaceRecognizer::run() {
     cv::Mat frame; // captured frame
 
-    if (!captureDevice.open(0)) {
+    if (!capture_device.open(0)) {
         std::cerr << "Error: Could not open camera.\n";
         return false;
     }
 
     do {
-        captureDevice.read(frame);
+        capture_device.read(frame);
         if (frame.empty()) {
             std::cerr << "Cam disconnected? End of video?" << std::endl;
             return -1;
@@ -68,7 +73,7 @@ std::vector<cv::Point2f> FaceRecognizer::find_face(cv::Mat& frame) {
 FaceRecognizer::~FaceRecognizer()
 {
     cv::destroyAllWindows();
-    if (captureDevice.isOpened()) {
-        captureDevice.release();
+    if (capture_device.isOpened()) {
+        capture_device.release();
     }
 }

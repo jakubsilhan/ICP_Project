@@ -1,9 +1,11 @@
+#include <memory>
 #include <algorithm>
+#include <filesystem>
+#include <iostream>
 
 #include "audio/AudioManager.hpp"
 
-AudioManager::AudioManager()
-{
+AudioManager::AudioManager() {
 	ma_result init_result = ma_engine_init(nullptr, &engine);
 	if (init_result != MA_SUCCESS) {
 		std::cerr << "[!] FAILED TO INITIALIZE AudioManager: " << init_result << "\n";
@@ -13,8 +15,7 @@ AudioManager::AudioManager()
 	}
 }
 
-AudioManager::~AudioManager()
-{
+AudioManager::~AudioManager() {
 	ma_engine_uninit(&engine);
 }
 
@@ -36,7 +37,7 @@ void AudioManager::load(const std::string& name, const std::filesystem::path& fi
 	std::cerr << "Loaded audio file: " << filename.string() << std::endl;
 }
 
-void AudioManager::loadBGM(const std::string& name, const std::filesystem::path& filename, float volume) {
+void AudioManager::load_BGM(const std::string& name, const std::filesystem::path& filename, float volume) {
 	// Create sound with custom deleter
 	auto new_sound = std::make_unique<ma_sound>();
 
@@ -52,7 +53,7 @@ void AudioManager::loadBGM(const std::string& name, const std::filesystem::path&
 	std::cerr << "Loaded audio file: " << filename.string() << std::endl;
 }
 
-bool AudioManager::play3D(const std::string& name, float sound_x, float sound_y, float sound_z)
+bool AudioManager::play_3D(const std::string& name, float sound_x, float sound_y, float sound_z)
 {
 	auto it = sound_bank.find(name);
 	if (it == sound_bank.end()) {
@@ -85,21 +86,9 @@ bool AudioManager::play3D(const std::string& name, float sound_x, float sound_y,
 	return true;
 }
 
-void AudioManager::changeVolume(double change) {
-	auto volume = ma_sound_get_volume(current_bgm.get());
-	volume = volume + change*0.05f;
-	volume = std::clamp(volume, 0.0f, 1.0f);
-	ma_sound_set_volume(current_bgm.get(), volume);
-}
-
-void AudioManager::setListenerPosition(float x, float y, float z, float dirX, float dirY, float dirZ) {
-	ma_engine_listener_set_position(&engine, 0, x, y, z);
-	ma_engine_listener_set_direction(&engine, 0, dirX, dirY, dirZ);
-}
-
-bool AudioManager::playBGM(const std::string& name, float volume) {
+bool AudioManager::play_BGM(const std::string& name, float volume) {
 	// Stop existing BGM if it's playing
-	stopBGM();
+	stop_BGM();
 
 	auto it = bgm_bank.find(name);
 	if (it == bgm_bank.end()) {
@@ -125,14 +114,14 @@ bool AudioManager::playBGM(const std::string& name, float volume) {
 	// Start playing
 	if (ma_sound_start(current_bgm.get()) != MA_SUCCESS) {
 		std::cerr << "Failed to start BGM: " << name << std::endl;
-		stopBGM();
+		stop_BGM();
 		return false;
 	}
 
 	return true;
 }
 
-void AudioManager::stopBGM() {
+void AudioManager::stop_BGM() {
 	if (current_bgm) {
 		ma_sound_stop(current_bgm.get());
 		ma_sound_uninit(current_bgm.get());
@@ -140,8 +129,19 @@ void AudioManager::stopBGM() {
 	}
 }
 
-void AudioManager::cleanFinishedSounds()
-{
+void AudioManager::change_volume(double change) {
+	auto volume = ma_sound_get_volume(current_bgm.get());
+	volume = volume + change*0.05f;
+	volume = std::clamp(volume, 0.0f, 1.0f);
+	ma_sound_set_volume(current_bgm.get(), volume);
+}
+
+void AudioManager::set_listener_position(float x, float y, float z, float dir_x, float dir_y, float dir_z) {
+	ma_engine_listener_set_position(&engine, 0, x, y, z);
+	ma_engine_listener_set_direction(&engine, 0, dir_x, dir_y, dir_z);
+}
+
+void AudioManager::clean_finished_sounds() {
 	// Remove sounds that have finished playing
 	active_sounds.erase(
 		std::remove_if(active_sounds.begin(), active_sounds.end(),

@@ -1,7 +1,8 @@
 #include <iostream>
-#include "include/utils/GlDebugCallback.hpp"
 
-void GLAPIENTRY MessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam)
+#include "utils/GlDebugCallback.hpp"
+
+void GLAPIENTRY message_callback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam)
 {
 	auto const src_str = [source]() {
 		switch (source)
@@ -47,4 +48,3 @@ void GLAPIENTRY MessageCallback(GLenum source, GLenum type, GLuint id, GLenum se
 		", ID = '" << id << '\'' <<
 		", message = '" << message << '\'' << std::endl;
 }
-

@@ -143,12 +143,12 @@ inline std::shared_ptr<Mesh> generate_sphere(unsigned int sectors, unsigned int 
 
             glm::vec3 position(x, y, z);
             glm::vec3 normal = glm::normalize(position);
-            glm::vec2 texCoords(-S, R);
+            glm::vec2 tex_coords(-S, R);
 
             V.push_back({
                 position,
                 normal,
-                texCoords
+                tex_coords
             });
         }
     }

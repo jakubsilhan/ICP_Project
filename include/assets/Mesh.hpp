@@ -69,7 +69,7 @@ public:
         glVertexArrayAttribBinding(vao_, attribute_location_normal, 0);
         glEnableVertexArrayAttrib(vao_, attribute_location_normal);
 
-        glVertexArrayAttribFormat(vao_, attribute_location_texture_coords, glm::vec2::length(), GL_FLOAT, GL_FALSE, offsetof(Vertex, texCoords));
+        glVertexArrayAttribFormat(vao_, attribute_location_texture_coords, glm::vec2::length(), GL_FLOAT, GL_FALSE, offsetof(Vertex, tex_coords));
         glVertexArrayAttribBinding(vao_, attribute_location_texture_coords, 0);
         glEnableVertexArrayAttrib(vao_, attribute_location_texture_coords);
 
@@ -108,7 +108,7 @@ public:
         }
     }
 
-    const AABB& getLocalAABB() const { return localAABB_; }
+    const AABB& get_local_AABB() const { return localAABB_; }
 
     ~Mesh() {
         glDeleteBuffers(1, &ebo_);
@@ -129,6 +129,3 @@ private:
     // Bounding box
     AABB localAABB_;
 };
-
-
-

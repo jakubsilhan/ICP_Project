@@ -1,18 +1,21 @@
 #include <algorithm>
 
-#include "imgui.h"
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_opengl3.h"
+#include <glm/glm.hpp>
+
+// ImGUI
+#include <imgui.h>               // main ImGUI header
+#include <imgui_impl_glfw.h>     // GLFW bindings
+#include <imgui_impl_opengl3.h>  // OpenGL bindings
 
 #include "scenes/ViewerScene.hpp"
 #include "render/Model.hpp"
 #include "utils/Camera.hpp"
 #include "utils/MeshGen.hpp"
 
-ViewerScene::ViewerScene(int windowWidth, int windowHeight) {
-    width = windowWidth;
-    height = windowHeight;
-    camera.Position = glm::vec3(0, 0, 10);
+ViewerScene::ViewerScene(int window_width, int window_height) {
+    width = window_width;
+    height = window_height;
+    camera.position = glm::vec3(0, 0, 10);
     update_projection_matrix();
     //projection_matrix = glm::perspective(glm::radians(45.0f), 1.0f, 0.1f, 1000.0f);
 
@@ -24,7 +27,7 @@ void ViewerScene::init_assets() {
     // Load shaders
     shader_library.emplace("simple_shader", std::make_shared<ShaderProgram>(std::filesystem::path("resources/basic_sdr/basic.vert"), std::filesystem::path("resources/basic_sdr/basic.frag")));
     shader_library.emplace("texture_shader", std::make_shared<ShaderProgram>(std::filesystem::path("resources/texture_sdr/tex.vert"), std::filesystem::path("resources/texture_sdr/tex.frag")));
-    shader_library.at("texture_shader")->setUniform("tex0", 0);
+    shader_library.at("texture_shader")->set_uniform("tex0", 0);
 
     // Load meshes
     mesh_library.emplace("cube_single", generate_cube(cube_atlas_single));
@@ -46,27 +49,27 @@ void ViewerScene::init_assets() {
 
     // Construct models
     Model cube_model;
-    cube_model.addMesh(mesh_library.at("cube_single"), shader_library.at("simple_shader"));
+    cube_model.add_mesh(mesh_library.at("cube_single"), shader_library.at("simple_shader"));
     models.emplace("cube_object", std::move(cube_model));
 
     Model wood_box_model;
-    wood_box_model.addMesh(mesh_library.at("cube_single"), shader_library.at("texture_shader"), texture_library.at("wood_box"));
+    wood_box_model.add_mesh(mesh_library.at("cube_single"), shader_library.at("texture_shader"), texture_library.at("wood_box"));
     models.emplace("wood_box_object", std::move(wood_box_model));
 
     Model wood_box_logos_model;
-    wood_box_logos_model.addMesh(mesh_library.at("cube"), shader_library.at("texture_shader"), texture_library.at("wood_box_logos"));
+    wood_box_logos_model.add_mesh(mesh_library.at("cube"), shader_library.at("texture_shader"), texture_library.at("wood_box_logos"));
     models.emplace("wood_box_logos_object", std::move(wood_box_logos_model));
 
     Model sphere_l_model;
-    sphere_l_model.addMesh(mesh_library.at("sphere_lowpoly"), shader_library.at("simple_shader"));
+    sphere_l_model.add_mesh(mesh_library.at("sphere_lowpoly"), shader_library.at("simple_shader"));
     models.emplace("sphere_l_object", std::move(sphere_l_model));
 
     Model sphere_h_model;
-    sphere_h_model.addMesh(mesh_library.at("sphere_highpoly"), shader_library.at("simple_shader"));
+    sphere_h_model.add_mesh(mesh_library.at("sphere_highpoly"), shader_library.at("simple_shader"));
     models.emplace("sphere_h_object", std::move(sphere_h_model));
 
     Model globe_model;
-    globe_model.addMesh(mesh_library.at("sphere_highpoly"), shader_library.at("texture_shader"), texture_library.at("globe"));
+    globe_model.add_mesh(mesh_library.at("sphere_highpoly"), shader_library.at("texture_shader"), texture_library.at("globe"));
     models.emplace("globe_object", std::move(globe_model));
 
     // Create index vector
@@ -75,12 +78,12 @@ void ViewerScene::init_assets() {
 
     // Load audio
     audio_manager.load("ping", "resources/sounds/ping.wav", 0.5f, 10000.0f, 1.0f);
-    audio_manager.loadBGM("bgm", "resources/theme/03_E1M1_At_Doom's_Gate.mp3", 1.0f);
+    audio_manager.load_BGM("bgm", "resources/theme/03_E1M1_At_Doom's_Gate.mp3", 1.0f);
     //audio_manager.load("step1", "resources/sounds/step1.wav");
     //audio_manager.load("step2", "resources/sounds/step2.wav");
 
     // Play BGM
-    audio_manager.playBGM("bgm", 0.2f);
+    audio_manager.play_BGM("bgm", 0.2f);
 }
 
 void ViewerScene::set_enabled(bool enabled) {
@@ -90,7 +93,7 @@ void ViewerScene::set_enabled(bool enabled) {
 void ViewerScene::process_input(GLFWwindow* window, GLfloat deltaTime) {
     if (!this->enabled) return;
 
-    camera.ProcessInput(window, deltaTime);
+    camera.process_input(window, deltaTime);
 }
 
 void ViewerScene::update(float dt) {
@@ -99,12 +102,12 @@ void ViewerScene::update(float dt) {
 
 void ViewerScene::render() {
     // Update listener location and clear sounds
-    audio_manager.setListenerPosition(camera.Position.x, camera.Position.y, camera.Position.z, camera.Front.x, camera.Front.y, camera.Front.z);
-    audio_manager.cleanFinishedSounds();
+    audio_manager.set_listener_position(camera.position.x, camera.position.y, camera.position.z, camera.front.x, camera.front.y, camera.front.z);
+    audio_manager.clean_finished_sounds();
 
     // Model selection
     Model& model = models[model_names[selected_model]];
-    model.draw(camera.GetViewMatrix(), projection_matrix);
+    model.draw(camera.get_view_matrix(), projection_matrix);
 }
 
 void ViewerScene::display_controls() {
@@ -128,7 +131,7 @@ void ViewerScene::next_model() {
 }
 
 std::pair<double, double> ViewerScene::get_last_cursor() {
-    return { cursorLastX, cursorLastY };
+    return { cursor_last_x, cursor_last_y };
 }
 
 void ViewerScene::next_color() {
@@ -144,7 +147,7 @@ void ViewerScene::update_shader_color() {
         case 1: shader_color = glm::vec4(0, 1, 0, 1); break;
         case 2: shader_color = glm::vec4(0, 0, 1, 1); break;
     }
-    shader_library.at("simple_shader")->setUniform("uniformColor", shader_color);
+    shader_library.at("simple_shader")->set_uniform("uniformColor", shader_color);
 }
 #pragma endregion
 
@@ -162,14 +165,14 @@ void ViewerScene::on_key(int key, int action) {
         next_color();
         break;
     case GLFW_KEY_X:
-        camera.Reset(glm::vec3(0, 0, 10));
+        camera.reset(glm::vec3(0, 0, 10));
         break;
     case GLFW_KEY_Q:
         next_model();
         break;
     case GLFW_KEY_H: {
-        auto m_pos = models[model_names[selected_model]].getPosition();
-        audio_manager.play3D(
+        auto m_pos = models[model_names[selected_model]].get_position();
+        audio_manager.play_3D(
             "ping",           // name
             m_pos.x, m_pos.y, m_pos.z // Sound Source Position
         );
@@ -182,11 +185,11 @@ void ViewerScene::on_key(int key, int action) {
 
 void ViewerScene::on_mouse_move(double x, double y) {
     if (this->enabled) {
-        camera.ProcessMouseMovement(x - cursorLastX, (y - cursorLastY) * -1.0);
+        camera.process_mouse_movement(x - cursor_last_x, (y - cursor_last_y) * -1.0);
     }
 
-    cursorLastX = x;
-    cursorLastY = y;
+    cursor_last_x = x;
+    cursor_last_y = y;
 }
 
 void ViewerScene::on_scroll(double offset) {

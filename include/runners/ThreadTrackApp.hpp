@@ -1,36 +1,37 @@
 #pragma once
 
 #include <opencv2/opencv.hpp>
-#include "include/recognizers/FaceRecognizer.hpp"
-#include "include/recognizers/RedRecognizer.hpp"
-#include "include/utils/FpsMeter.hpp"
-#include "include/concurrency/SyncedDeque.hpp"
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+
+#include "recognizers/FaceRecognizer.hpp"
+#include "recognizers/RedRecognizer.hpp"
+#include "concurrency/SyncedDeque.hpp"
+#include "utils/FpsMeter.hpp"
 
 class ThreadTrackApp {
 public:
 	ThreadTrackApp();
 	bool init(void);
 	int run(void);
-	void trackerThread();
-	void glThread();
+	void tracker_worker();
+	void gl_worker();
 	~ThreadTrackApp();
 
 private:
-	SyncedDeque<cv::Mat> deQueue;
-	std::atomic<bool> endedMain = false;
-    std::atomic<bool> endedThread = false;
-	FaceRecognizer faceRecognizer;
-	RedRecognizer redRecognizer;
-	cv::VideoCapture captureDevice;
-	cv::Mat staticImage;
-	cv::Mat warningImage;
+	SyncedDeque<cv::Mat> de_queue;
+	std::atomic<bool> ended_main = false;
+    std::atomic<bool> ended_tracker_thread = false;
+	FaceRecognizer face_recognizer;
+	RedRecognizer red_recognizer;
+	cv::VideoCapture capture_device;
+	cv::Mat static_image;
+	cv::Mat warning_image;
 	FpsMeter FPS_main;
 	FpsMeter FPS_tracker;
 
 	// GL stuff
 	GLFWwindow* window = nullptr;
-	std::atomic<bool> endedGl = false;
+	std::atomic<bool> ended_gl = false;
 };

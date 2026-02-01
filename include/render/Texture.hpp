@@ -1,14 +1,14 @@
 #pragma once 
 
 #include <filesystem>
+
 #include <opencv2/opencv.hpp>
 #include <GL/glew.h> 
 #include <glm/glm.hpp>
 
 #include "utils/NonCopyable.hpp"
 
-class Texture : private NonCopyable
-{
+class Texture : private NonCopyable {
 public:
     enum class Interpolation {
         nearest,

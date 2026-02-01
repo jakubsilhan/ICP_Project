@@ -1,3 +1,5 @@
+#include <vector>
+#include <string>
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -23,10 +25,10 @@ ShaderProgram::ShaderProgram(const std::string & vertex_shader_code, const std::
 }
 
 ShaderProgram::ShaderProgram(const std::filesystem::path & VS_file, const std::filesystem::path & FS_file) :
-    ShaderProgram{textFileRead(VS_file), textFileRead(FS_file)} {}
+    ShaderProgram{text_file_read(VS_file), text_file_read(FS_file)} {}
 
 // Get location or write error to console
-GLuint ShaderProgram::getUniformLocation(const std::string & name) {
+GLuint ShaderProgram::get_uniform_location(const std::string & name) {
     // deferred (lazy) cache generation
     
     // Check if the location is already cached
@@ -44,7 +46,7 @@ GLuint ShaderProgram::getUniformLocation(const std::string & name) {
     return loc;
 }
 
-GLint ShaderProgram::getAttribLocation(const std::string & name) {
+GLint ShaderProgram::get_attrib_location(const std::string & name) {
     GLint loc = glGetAttribLocation(ID, name.c_str());
     if (loc == -1)
         std::cerr << "No vertex attribute with name: " << name << ", or reserved name (starting with gl_)\n";
@@ -53,48 +55,48 @@ GLint ShaderProgram::getAttribLocation(const std::string & name) {
 
 // Uniform setting
 
-void ShaderProgram::setUniform(const std::string& name, const GLfloat val) {
-    auto loc = getUniformLocation(name);
+void ShaderProgram::set_uniform(const std::string& name, const GLfloat val) {
+    auto loc = get_uniform_location(name);
     glProgramUniform1f(ID, loc, val);
 }
 
-void ShaderProgram::setUniform(const std::string& name, const GLint val) {
-    auto loc = getUniformLocation(name);
+void ShaderProgram::set_uniform(const std::string& name, const GLint val) {
+    auto loc = get_uniform_location(name);
     glProgramUniform1i(ID, loc, val);
 }
 
-void ShaderProgram::setUniform(const std::string& name, const glm::vec3 & val) {
-    auto loc = getUniformLocation(name);
+void ShaderProgram::set_uniform(const std::string& name, const glm::vec3 & val) {
+    auto loc = get_uniform_location(name);
 	glProgramUniform3fv(ID, loc, 1, glm::value_ptr(val));
 }
 
-void ShaderProgram::setUniform(const std::string& name, const glm::vec4 & val) {
-    auto loc = getUniformLocation(name);
+void ShaderProgram::set_uniform(const std::string& name, const glm::vec4 & val) {
+    auto loc = get_uniform_location(name);
     glProgramUniform4fv(ID, loc, 1, glm::value_ptr(val));
 }
 
-void ShaderProgram::setUniform(const std::string& name, const glm::mat3 & val) {
-    auto loc = getUniformLocation(name);
+void ShaderProgram::set_uniform(const std::string& name, const glm::mat3 & val) {
+    auto loc = get_uniform_location(name);
 	glProgramUniformMatrix3fv(ID, loc, 1, GL_FALSE, glm::value_ptr(val));
 }
 
-void ShaderProgram::setUniform(const std::string& name, const glm::mat4 & val) {
-    auto loc = getUniformLocation(name);
+void ShaderProgram::set_uniform(const std::string& name, const glm::mat4 & val) {
+    auto loc = get_uniform_location(name);
     glProgramUniformMatrix4fv(ID, loc, 1, GL_FALSE, glm::value_ptr(val));
 }
 
-void ShaderProgram::setUniform(const std::string & name, const std::vector<GLint>& val) {
-    auto loc = getUniformLocation(name);
+void ShaderProgram::set_uniform(const std::string & name, const std::vector<GLint>& val) {
+    auto loc = get_uniform_location(name);
     glProgramUniform1iv(ID, loc, val.size(), reinterpret_cast<GLint const*>(val.data()));
 }
 
-void ShaderProgram::setUniform(const std::string & name, const std::vector<GLfloat>& val) {
-    auto loc = getUniformLocation(name);
+void ShaderProgram::set_uniform(const std::string & name, const std::vector<GLfloat>& val) {
+    auto loc = get_uniform_location(name);
     glProgramUniform1fv(ID, loc, val.size(), reinterpret_cast<GLfloat const*>(val.data()));
 }
     
-void ShaderProgram::setUniform(const std::string & name, const std::vector<glm::vec3>& val) {
-    auto loc = getUniformLocation(name);
+void ShaderProgram::set_uniform(const std::string & name, const std::vector<glm::vec3>& val) {
+    auto loc = get_uniform_location(name);
     glProgramUniform3fv(ID, loc, val.size(), glm::value_ptr(val[0]));
 }
     
@@ -175,7 +177,7 @@ GLuint ShaderProgram::link_shader(const std::vector<GLuint> shader_ids) {
 	return prog_ID;
 }
 
-std::string ShaderProgram::textFileRead(const std::filesystem::path& filepath) {
+std::string ShaderProgram::text_file_read(const std::filesystem::path& filepath) {
 	std::ifstream file(filepath);
 	if (!file.is_open())
 		throw std::runtime_error(std::string("Error opening file: ") + filepath.string());

@@ -1,4 +1,5 @@
 #pragma once
+
 #include <cstdarg>
 
 #if !defined(_WIN32)

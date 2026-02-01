@@ -1,9 +1,10 @@
 #pragma once
 
 #include <opencv2/opencv.hpp>
-#include "include/recognizers/FaceRecognizer.hpp"
-#include "include/recognizers/RedRecognizer.hpp"
-#include "include/utils/FpsMeter.hpp"
+
+#include "recognizers/FaceRecognizer.hpp"
+#include "recognizers/RedRecognizer.hpp"
+#include "utils/FpsMeter.hpp"
 
 class TrackApp {
 public:
@@ -13,10 +14,10 @@ public:
 	~TrackApp();
 
 private:
-	FaceRecognizer faceRecognizer;
-	RedRecognizer redRecognizer;
-	cv::VideoCapture captureDevice;
-	cv::Mat staticImage;
-	cv::Mat warningImage;
+	FaceRecognizer face_recognizer;
+	RedRecognizer red_recognizer;
+	cv::VideoCapture capture_device;
+	cv::Mat static_image;
+	cv::Mat warning_image;
 	FpsMeter FPS;
 };

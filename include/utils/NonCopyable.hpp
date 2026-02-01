@@ -1,7 +1,6 @@
 #pragma once 
 
-class NonCopyable
-{
+class NonCopyable {
   public: 
     NonCopyable (const NonCopyable &) = delete;              // copy-constructor
     NonCopyable & operator = (const NonCopyable &) = delete; // assign operator
