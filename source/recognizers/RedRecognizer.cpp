@@ -1,9 +1,12 @@
-#include "include/recognizers/RedRecognizer.hpp"
-#include "include/render/Drawings.hpp"
-#include <opencv2/opencv.hpp>
 #include <vector>
 #include <numeric>
 #include <chrono>
+#include <iostream>
+
+#include <opencv2/opencv.hpp>
+
+#include "recognizers/RedRecognizer.hpp"
+#include "render/Drawings.hpp"
 
 RedRecognizer::RedRecognizer() {
     // Constructor
@@ -40,9 +43,9 @@ int RedRecognizer::run_static(std::string path) {
 
 int RedRecognizer::run_video(std::string path) {
     // Initialization
-    captureDevice = cv::VideoCapture(path);
+    capture_device = cv::VideoCapture(path);
 
-    if (!captureDevice.isOpened()) {
+    if (!capture_device.isOpened()) {
         std::cerr << "no camera" << std::endl;
         exit(EXIT_FAILURE);
     }
@@ -52,11 +55,12 @@ int RedRecognizer::run_video(std::string path) {
     // Watch video
     while (1) {
         // Check video
-        captureDevice.read(frame);
+        capture_device.read(frame);
         if (frame.empty()) {
             std::cerr << "No video" << std::endl;
             break;
         }
+
         // Safekeep original frames
         frame.copyTo(scene);
         cv::imshow("grabbed", frame);
@@ -72,8 +76,8 @@ int RedRecognizer::run_video(std::string path) {
         }
     }
 
-    if (captureDevice.isOpened()) {
-        captureDevice.release();
+    if (capture_device.isOpened()) {
+        capture_device.release();
     }
     cv::destroyAllWindows();
     exit(EXIT_SUCCESS);
@@ -103,18 +107,18 @@ cv::Point2f RedRecognizer::find_red(cv::Mat& frame) {
     // Morphological Operations for noise reduction (TODO)
 
     // Finds masked pixels
-    std::vector<cv::Point> whitePixels;
-    cv::findNonZero(mask_combined, whitePixels);
+    std::vector<cv::Point> white_pixels;
+    cv::findNonZero(mask_combined, white_pixels);
 
     // If no red pixels are found, return the default (0.0f, 0.0f)
-    if (whitePixels.size() == 0) {
+    if (white_pixels.size() == 0) {
         return cv::Point2f(0.0f, 0.0f);
     }
 
     // Calculate Centroid
-    cv::Point2f whiteAccum = std::reduce(whitePixels.begin(), whitePixels.end()); // Sums x and y coords
+    cv::Point2f white_accum = std::reduce(white_pixels.begin(), white_pixels.end()); // Sums x and y coords
 
-    cv::Point2f centroid_absolute = whiteAccum / (float)whitePixels.size(); // Gets centroid
+    cv::Point2f centroid_absolute = white_accum / (float)white_pixels.size(); // Gets centroid
 
     cv::Point2f centroid_normalized = { // Normalize
         centroid_absolute.x / frame.cols,

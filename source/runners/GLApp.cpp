@@ -1,27 +1,31 @@
-#include <iostream>
 #include <thread>
 #include <optional>
-
-#include "include/runners/GLApp.hpp"
-#include "include/render/Drawings.hpp"
-#include "render/SyncedTexture.hpp"
-#include "include/utils/GlDebugCallback.hpp"
-#include "utils/Screenshot.hpp"
-#include "scenes/ShooterScene.hpp"
-#include "scenes/ViewerScene.hpp"
-
 #include <fstream>
-#include <nlohmann/json.hpp> // JSON
+#include <iostream>
 
-#include <tinyfiledialogs/tinyfiledialogs.h>
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
+#include <opencv2/opencv.hpp>
 
 // ImGUI
 #include <imgui.h>               // main ImGUI header
 #include <imgui_impl_glfw.h>     // GLFW bindings
 #include <imgui_impl_opengl3.h>  // OpenGL bindings
 
-GLApp::GLApp()
-{
+#include <nlohmann/json.hpp> // JSON
+
+#include <tinyfiledialogs/tinyfiledialogs.h>
+
+#include "runners/GLApp.hpp"
+#include "render/Drawings.hpp"
+#include "render/SyncedTexture.hpp"
+#include "utils/GlDebugCallback.hpp"
+#include "utils/Screenshot.hpp"
+#include "scenes/ShooterScene.hpp"
+#include "scenes/ViewerScene.hpp"
+
+GLApp::GLApp() {
 }
 
 bool GLApp::load_config(const std::string& filename) {
@@ -36,8 +40,8 @@ bool GLApp::load_config(const std::string& filename) {
         nlohmann::json j;
         file >> j;
 
-        windowWidth = j["window"]["width"].get<int>();
-        windowHeight = j["window"]["height"].get<int>();
+        window_width = j["window"]["width"].get<int>();
+        window_height = j["window"]["height"].get<int>();
     }
     catch (std::exception& e) {
         std::cerr << "Error parsing JSON: " << e.what() << std::endl;
@@ -48,7 +52,6 @@ bool GLApp::load_config(const std::string& filename) {
 }
 
 bool GLApp::init() {
-    // TODO should probably be separated into multiple init methods
     // GLFW initialization
     glfwSetErrorCallback(glfw_error_callback);
     if (!glfwInit()) {
@@ -67,7 +70,7 @@ bool GLApp::init() {
     }
 
     // Window creation
-    window = glfwCreateWindow(windowWidth, windowHeight, "OpenGL context", NULL, NULL);
+    window = glfwCreateWindow(window_width, window_height, "OpenGL context", NULL, NULL);
     if (!window) {
         std::cerr << "Error: Could not create GLFW window. \n";
         glfwTerminate();
@@ -76,8 +79,8 @@ bool GLApp::init() {
 
     // Worker window context creation
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);  // Hidden window
-    trackerWorkerWindow = glfwCreateWindow(1, 1, "", NULL, window);
-    if (!trackerWorkerWindow) {
+    tracker_worker_window = glfwCreateWindow(1, 1, "", NULL, window);
+    if (!tracker_worker_window) {
         std::cerr << "Failed to create worker window\n";
         return false;
     }
@@ -98,7 +101,7 @@ bool GLApp::init() {
     }
 
     if (GLEW_ARB_debug_output) {
-        glDebugMessageCallback(MessageCallback, 0);
+        glDebugMessageCallback(message_callback, 0);
         glEnable(GL_DEBUG_OUTPUT);
 
         std::cout << "GL_DEBUG enabled" << std::endl;
@@ -140,20 +143,20 @@ bool GLApp::init() {
     }
     
     // Init tracking
-    faceRecognizer.init();
-    if (!captureDevice.open(0)) {
+    face_recognizer.init();
+    if (!capture_device.open(0)) {
         std::cerr << "Error: Could not open camera.\n";
         return false;
     }
-    cameraWidth = (int)captureDevice.get(cv::CAP_PROP_FRAME_WIDTH);
-    cameraHeight = (int)captureDevice.get(cv::CAP_PROP_FRAME_HEIGHT);
-    framePool.init(
-        cameraWidth,
-        cameraHeight,
+    camera_width = (int)capture_device.get(cv::CAP_PROP_FRAME_WIDTH);
+    camera_height = (int)capture_device.get(cv::CAP_PROP_FRAME_HEIGHT);
+    frame_pool.init(
+        camera_width,
+        camera_height,
         CV_8UC3,
         SyncedTexture::Interpolation::linear_mipmap_linear
     );
-    defaultRecognizedData = RecognizedData{
+    default_recognized_data = RecognizedData{
         std::make_unique<SyncedTexture>(),
         std::vector<cv::Point2f>{},
         cv::Point2f{}
@@ -161,19 +164,17 @@ bool GLApp::init() {
 
     // Init scene
     #ifdef SCENE_SHOOTER
-    activeScene = std::make_unique<ShooterScene>(windowWidth, windowHeight);
+    active_scene = std::make_unique<ShooterScene>(window_width, window_height);
     #endif
 
     #ifdef SCENE_VIEWER
-    activeScene = std::make_unique<ViewerScene>(windowWidth, windowHeight);
+    active_scene = std::make_unique<ViewerScene>(window_width, window_height);
     #endif
 
     return true;
 }
 
-bool GLApp::init_imgui()
-{
-
+bool GLApp::init_imgui() {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     if (!ImGui_ImplGlfw_InitForOpenGL(window, true)) {
@@ -191,7 +192,7 @@ bool GLApp::init_imgui()
 
 bool GLApp::run() {
     // Title string
-    std::ostringstream titleString;
+    std::ostringstream title_string;
     glm::vec4 shader_color;
 
     // Culling
@@ -206,24 +207,24 @@ bool GLApp::run() {
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
     // Run tracker
-    trackthr = std::jthread(&GLApp::trackerThread, this);
+    tracker_thread = std::jthread(&GLApp::tracker_worker, this);
 
-    std::optional<RecognizedData> currentRecognizedData;
+    std::optional<RecognizedData> current_recognized_data;
 
     while (!glfwWindowShouldClose(window)) {
         // Reinitializations
-        titleString.str("");
-        titleString.clear();
+        title_string.str("");
+        title_string.clear();
 
         // Get recognized data
-        if (auto newRecognizedData = deQueue.tryPopFront()) {
-            if (currentRecognizedData) framePool.release(std::move(currentRecognizedData->frame));
-            currentRecognizedData = std::move(*newRecognizedData);
+        if (auto new_recognized_data = de_queue.try_pop_front()) {
+            if (current_recognized_data) frame_pool.release(std::move(current_recognized_data->frame));
+            current_recognized_data = std::move(*new_recognized_data);
         }
-        const RecognizedData& recognizedData = currentRecognizedData ? *currentRecognizedData : defaultRecognizedData;
+        const RecognizedData& recognized_data = current_recognized_data ? *current_recognized_data : default_recognized_data;
 
         // Process recognized data
-        activeScene->set_enabled(recognizedData.faces.size() == 1);
+        active_scene->set_enabled(recognized_data.faces.size() == 1);
 
         // Prepare imgui render
         ImGui_ImplOpenGL3_NewFrame();
@@ -257,22 +258,22 @@ bool GLApp::run() {
         }
         ImGui::End();
         if (imgui_full) {
-            ImGui::SetNextWindowPos(ImVec2(windowWidth-300-10, 10));
+            ImGui::SetNextWindowPos(ImVec2(window_width-300-10, 10));
             ImGui::SetNextWindowSize(ImVec2(300, 210));
             ImGui::Begin("Scene info", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
-            activeScene->display_controls();
+            active_scene->display_controls();
             ImGui::End();
 
         }
 
         if (imgui_full) {
             // The camera window
-            ImVec2 cameraSize((int)((float)cameraWidth / cameraHeight * 150), 150);
-            ImGui::SetNextWindowPos(ImVec2(10, windowHeight - cameraSize[1] - 10));
+            ImVec2 cameraSize((int)((float)camera_width / camera_height * 150), 150);
+            ImGui::SetNextWindowPos(ImVec2(10, window_height - cameraSize[1] - 10));
             ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
             ImGui::SetNextWindowSize(cameraSize);
             ImGui::Begin("Camera", nullptr, ImGuiWindowFlags_NoDecoration);
-            ImGui::Image((ImTextureID)(intptr_t)recognizedData.frame->get_name(), cameraSize, ImVec2(0, 1), ImVec2(1, 0));
+            ImGui::Image((ImTextureID)(intptr_t)recognized_data.frame->get_name(), cameraSize, ImVec2(0, 1), ImVec2(1, 0));
             ImGui::End();
             ImGui::PopStyleVar();
         }
@@ -286,14 +287,14 @@ bool GLApp::run() {
         last_frame_time = current_frame_time;
 
         if (glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED) {
-            activeScene->process_input(window, delta_time);
+            active_scene->process_input(window, delta_time);
         }
 
         // Update scene
-        activeScene->update(delta_time);
+        active_scene->update(delta_time);
 
         // Render scene
-        activeScene->render();
+        active_scene->render();
 
         // display imgui
         ImGui::Render();
@@ -308,51 +309,51 @@ bool GLApp::run() {
         // FPS counter
         if (FPS_main.is_updated()) {
             if (vsync_on) {
-                titleString << "FPS: " << FPS_main.get() << " VSync: On";
+                title_string << "FPS: " << FPS_main.get() << " VSync: On";
             }
             else {
-                titleString << "FPS: " << FPS_main.get() << " VSync: Off";
+                title_string << "FPS: " << FPS_main.get() << " VSync: Off";
             }
-            glfwSetWindowTitle(window, titleString.str().c_str());
+            glfwSetWindowTitle(window, title_string.str().c_str());
         }
         FPS_main.update();
     }
 
-    endedMain = true;
+    ended_main = true;
 
     return true;
 }
 
-void GLApp::trackerThread() {
-    cv::Mat cvFrame;
+void GLApp::tracker_worker() {
+    cv::Mat cv_frame;
     std::unique_ptr<SyncedTexture> frame;
     std::vector<cv::Point2f> faces;
     cv::Point2f red;
 
-    glfwMakeContextCurrent(trackerWorkerWindow);
+    glfwMakeContextCurrent(tracker_worker_window);
 
-    while (!endedMain && !endedThread) {
-        captureDevice.read(cvFrame);
-        if (cvFrame.empty()) {
+    while (!ended_main && !ended_tracker_thread) {
+        capture_device.read(cv_frame);
+        if (cv_frame.empty()) {
             std::cerr << "Cam disconnected? End of video?" << std::endl;
-            endedThread = true;
+            ended_tracker_thread = true;
             break;
         }
 
-        faces = faceRecognizer.find_face(cvFrame);
-        red = redRecognizer.find_red(cvFrame);
+        faces = face_recognizer.find_face(cv_frame);
+        red = red_recognizer.find_red(cv_frame);
 
         for (auto face : faces) {
-            draw_cross_normalized(cvFrame, face, 30, CV_RGB(0, 255, 0));
+            draw_cross_normalized(cv_frame, face, 30, CV_RGB(0, 255, 0));
         }
-        draw_cross_normalized(cvFrame, red, 30);
+        draw_cross_normalized(cv_frame, red, 30);
 
-        frame = framePool.acquire();
+        frame = frame_pool.acquire();
         frame->fence_wait();
-        frame->replace_image(cvFrame);
+        frame->replace_image(cv_frame);
         frame->fence_sync();
 
-        deQueue.pushBack(RecognizedData{
+        de_queue.push_back(RecognizedData{
             std::move(frame),
             faces,
             red
@@ -366,26 +367,23 @@ void GLApp::trackerThread() {
 
 #pragma region Callbacks
 // Callbacks
-void GLApp::glfw_error_callback(int error, const char* description)
-{
+void GLApp::glfw_error_callback(int error, const char* description) {
     std::cerr << "GLFW error: " << description << std::endl;
 }
 
-void GLApp::glfw_framebuffer_size_callback(GLFWwindow* window, int width, int height)
-{
+void GLApp::glfw_framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     auto this_inst = static_cast<GLApp*>(glfwGetWindowUserPointer(window));
 
-    this_inst->windowWidth = width;
-    this_inst->windowHeight = height;
+    this_inst->window_width = width;
+    this_inst->window_height = height;
 
-    this_inst->activeScene->on_resize(width, height);
+    this_inst->active_scene->on_resize(width, height);
 
     // set viewport
     glViewport(0, 0, width, height);
 }
 
-void GLApp::glfw_mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
-{
+void GLApp::glfw_mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
     auto this_inst = static_cast<GLApp*>(glfwGetWindowUserPointer(window));
     if (action == GLFW_PRESS) {
         ImGuiIO& io = ImGui::GetIO();
@@ -396,12 +394,12 @@ void GLApp::glfw_mouse_button_callback(GLFWwindow* window, int button, int actio
                 if (mode == GLFW_CURSOR_NORMAL) {
                     // we are outside of application, catch the cursor
                     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-                    auto [lx, ly] = this_inst->activeScene->get_last_cursor();
+                    auto [lx, ly] = this_inst->active_scene->get_last_cursor();
                     glfwSetCursorPos(window, lx, ly);
                 }
                 else {
                     // we are already inside our game: shoot, click, etc.
-                    this_inst->activeScene->on_mouse_button(button, action);
+                    this_inst->active_scene->on_mouse_button(button, action);
                     std::cout << "Bang!\n";
                 }
                 break;
@@ -417,8 +415,7 @@ void GLApp::glfw_mouse_button_callback(GLFWwindow* window, int button, int actio
 	}
 }
 
-void GLApp::glfw_key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
-{
+void GLApp::glfw_key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
     auto this_inst = static_cast<GLApp*>(glfwGetWindowUserPointer(window));
     if ((action == GLFW_PRESS) || (action == GLFW_REPEAT)) {
         switch (key) {
@@ -446,19 +443,19 @@ void GLApp::glfw_key_callback(GLFWwindow* window, int key, int scancode, int act
             break;
         case GLFW_KEY_P: // Screenshot
             {
-                auto filterPatterns = std::array{ "*.png" }; 
+                auto filter_patterns = std::array{ "*.png" }; 
                 const char * path = tinyfd_saveFileDialog(
                     "Save screenshot as...",
                     NULL,
-                    filterPatterns.size(),
-                    filterPatterns.data(),
+                    filter_patterns.size(),
+                    filter_patterns.data(),
                     "PNG files"
                 );
                 if (!path) {
                     std::cout << "Saving screenshot canceled" << std::endl;
                     break;
                 }
-                if (!makeScreenshot(path, 0, 0, this_inst->windowWidth, this_inst->windowHeight)) {
+                if (!makeScreenshot(path, 0, 0, this_inst->window_width, this_inst->window_height)) {
                     std::cout << "Failed to save screenshot to: " << path << std::endl;
                     break;
                 }
@@ -470,8 +467,8 @@ void GLApp::glfw_key_callback(GLFWwindow* window, int key, int scancode, int act
             this_inst->fullscreen = !this_inst->fullscreen;
             if (this_inst->fullscreen) {
                 // Save window data
-                glfwGetWindowPos(this_inst->window, &this_inst->backupX, &this_inst->backupY);
-                glfwGetWindowSize(this_inst->window, &this_inst->backupW, &this_inst->backupH);
+                glfwGetWindowPos(this_inst->window, &this_inst->backup_x, &this_inst->backup_y);
+                glfwGetWindowSize(this_inst->window, &this_inst->backup_w, &this_inst->backup_h);
                 // Fulscreen
                 GLFWmonitor* primary = glfwGetPrimaryMonitor();
                 const GLFWvidmode* mode = glfwGetVideoMode(primary);
@@ -481,35 +478,33 @@ void GLApp::glfw_key_callback(GLFWwindow* window, int key, int scancode, int act
             }
             else {
                 glfwSetWindowMonitor(this_inst->window, nullptr,
-                    this_inst->backupX, this_inst->backupY, // position on screen
-                    this_inst->backupW,
-                    this_inst->backupH,
+                    this_inst->backup_x, this_inst->backup_y, // position on screen
+                    this_inst->backup_w,
+                    this_inst->backup_h,
                     0);
             }
             break;
         }
         default:
-                this_inst->activeScene->on_key(key, action);
+                this_inst->active_scene->on_key(key, action);
             break;
         }
     }
 }
 
-void GLApp::glfw_scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
-{
+void GLApp::glfw_scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
     auto this_inst = static_cast<GLApp*>(glfwGetWindowUserPointer(window));
     ImGuiIO& io = ImGui::GetIO();
     if (!io.WantCaptureMouse) {
-        this_inst->activeScene->on_scroll(yoffset);
+        this_inst->active_scene->on_scroll(yoffset);
     }
 }
 
-void GLApp::glfw_cursor_position_callback(GLFWwindow* window, double xpos, double ypos)
-{
-    auto app = static_cast<GLApp*>(glfwGetWindowUserPointer(window));
+void GLApp::glfw_cursor_position_callback(GLFWwindow* window, double xpos, double ypos) {
+    auto this_inst = static_cast<GLApp*>(glfwGetWindowUserPointer(window));
 
     if (glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED) {
-        app->activeScene->on_mouse_move(xpos, ypos);
+        this_inst->active_scene->on_mouse_move(xpos, ypos);
     }
 }
 
@@ -518,12 +513,12 @@ void GLApp::glfw_cursor_position_callback(GLFWwindow* window, double xpos, doubl
 
 #pragma region Imgui
 void GLApp::show_crosshair() {
-    int windowWidth, windowHeight;
-    glfwGetFramebufferSize(window, &windowWidth, &windowHeight);
+    int window_width, window_height;
+    glfwGetFramebufferSize(window, &window_width, &window_height);
 
     ImDrawList* draw_list = ImGui::GetForegroundDrawList();
-    float centerX = windowWidth * 0.5f;
-    float centerY = windowHeight * 0.5f;
+    float centerX = window_width * 0.5f;
+    float centerY = window_height * 0.5f;
     float size = 10.0f; // half-length in pixels
 
     draw_list->AddLine(ImVec2(centerX - size, centerY), ImVec2(centerX + size, centerY), IM_COL32(255, 255, 255, 255), 2.0f); // horizontal
@@ -531,14 +526,13 @@ void GLApp::show_crosshair() {
 }
 #pragma endregion
 
-GLApp::~GLApp()
-{
+GLApp::~GLApp() {
     // Signal threads to end
-    endedMain = true;
-    endedThread = true;
+    ended_main = true;
+    ended_tracker_thread = true;
 
     // Join threads
-    if (trackthr.joinable()) trackthr.join();
+    if (tracker_thread.joinable()) tracker_thread.join();
 
     // clean up ImGUI
     ImGui_ImplOpenGL3_Shutdown();

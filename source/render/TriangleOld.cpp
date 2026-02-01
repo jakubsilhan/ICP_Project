@@ -1,5 +1,9 @@
-#include "include/render/TriangleOld.hpp"
 #include <iostream>
+
+#include <GL/glew.h>
+#include <glm/glm.hpp>
+
+#include "render/TriangleOld.hpp"
 
 bool TriangleOld::init() {
     /*
@@ -7,7 +11,7 @@ bool TriangleOld::init() {
     */
 
     // Compile shaders
-    if (!compileShaders()) {
+    if (!compile_shaders()) {
         return false;
     }
 
@@ -34,7 +38,7 @@ bool TriangleOld::init() {
     );
 
     // Define vertex attribute
-    GLint position_attrib_location = glGetAttribLocation(shaderProgram, "attribute_Position");
+    GLint position_attrib_location = glGetAttribLocation(shader_program, "attribute_Position");
     glEnableVertexArrayAttrib(VAO, position_attrib_location); // Enable attribute 0 (layout)
     glVertexArrayAttribFormat(
         VAO,                                        // Which VAO to configure
@@ -49,21 +53,21 @@ bool TriangleOld::init() {
     glVertexArrayAttribBinding(VAO, position_attrib_location, 0);
 
     // Gen uniform Location (color) from shader
-    glUseProgram(shaderProgram); // Activate shader program for querying
-    uniformColorLoc = glGetUniformLocation(shaderProgram, "uniform_Color"); // Get integer handle for uniform_Color from GPU (to be able to access it to change the value)
-    if (uniformColorLoc == -1)
+    glUseProgram(shader_program); // Activate shader program for querying
+    uniform_color_loc = glGetUniformLocation(shader_program, "uniform_Color"); // Get integer handle for uniform_Color from GPU (to be able to access it to change the value)
+    if (uniform_color_loc == -1)
         std::cerr << "Warning: uniform_Color not found in shader. \n";
 
     return true;
 }
 
-bool TriangleOld::compileShaders() {
+bool TriangleOld::compile_shaders() {
     /*
     Helper function to compile and link shaders
     */
 
     // Vertex shader source code (GPU program for each vertex) - pass position for each vertex
-    const char* vertexShaderSrc = R"(
+    const char* vertex_shader_src = R"(
         #version 460 core
         in vec3 attribute_Position;     
         void main() {
@@ -71,7 +75,7 @@ bool TriangleOld::compileShaders() {
         }
     )";
 
-    //const char* vertexShaderSrc = R"(
+    //const char* vertex_shader_src = R"(
     //    #version 460 core                       // OpenGL 4.6 core profile
     //    layout(location = 0) in vec3 aPos;      // Declares a vertex attribute at attribute index 0 in VAO = position
     //    void main() {
@@ -100,7 +104,7 @@ bool TriangleOld::compileShaders() {
 
     // Compile vertex shader
     GLuint vs = glCreateShader(GL_VERTEX_SHADER); // Create vertex shader object
-    glShaderSource(vs, 1, &vertexShaderSrc, nullptr); // Attach source code to shader
+    glShaderSource(vs, 1, &vertex_shader_src, nullptr); // Attach source code to shader
     glCompileShader(vs); // Compile to shader
 
     // Compile fragment shader
@@ -109,10 +113,10 @@ bool TriangleOld::compileShaders() {
     glCompileShader(fs); // Compile shader
 
     // Link shaders into a program
-    shaderProgram = glCreateProgram(); // Create shader program object
-    glAttachShader(shaderProgram, vs); // Attach compile vertex shader
-    glAttachShader(shaderProgram, fs); // Attach compile fragment shader
-    glLinkProgram(shaderProgram); // Link shaders into executable GPU program
+    shader_program = glCreateProgram(); // Create shader program object
+    glAttachShader(shader_program, vs); // Attach compile vertex shader
+    glAttachShader(shader_program, fs); // Attach compile fragment shader
+    glLinkProgram(shader_program); // Link shaders into executable GPU program
 
     // Delete individual shaders after linking
     glDeleteShader(vs);
@@ -120,10 +124,10 @@ bool TriangleOld::compileShaders() {
 
     // Check link status
     GLint success;
-    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
+    glGetProgramiv(shader_program, GL_LINK_STATUS, &success);
     if (!success) {
         char infoLog[512];
-        glGetProgramInfoLog(shaderProgram, 512, nullptr, infoLog);
+        glGetProgramInfoLog(shader_program, 512, nullptr, infoLog);
         std::cerr << "Shader Program Link Error:\n" << infoLog << "\n";
         return false;
     }
@@ -135,21 +139,21 @@ void TriangleOld::draw() {
     /*
     �ncapsulated rendering
     */
-    glUseProgram(shaderProgram); // Activate shader program
+    glUseProgram(shader_program); // Activate shader program
     glBindVertexArray(VAO); // Bind VAO to tell GPU how to read vertices
     glDrawArrays(GL_TRIANGLES, 0, 3); // Draw 3 vertices as one triangle
 }
 
-void TriangleOld::setColor(float r, float g, float b, float a) {
+void TriangleOld::set_color(float r, float g, float b, float a) {
     /*
     Assigning color
     */
-    if (uniformColorLoc != -1)
-        glProgramUniform4f(shaderProgram, uniformColorLoc, r, g, b, a); // Set the uniform color via our previously retrieved handle
+    if (uniform_color_loc != -1)
+        glProgramUniform4f(shader_program, uniform_color_loc, r, g, b, a); // Set the uniform color via our previously retrieved handle
 }
 
 TriangleOld::~TriangleOld() {
     if (VBO) glDeleteBuffers(1, &VBO); // Delete GPU buffer
     if (VAO) glDeleteVertexArrays(1, &VAO); // Delete VAO
-    if (shaderProgram) glDeleteProgram(shaderProgram); // Delete shader program
+    if (shader_program) glDeleteProgram(shader_program); // Delete shader program
 }

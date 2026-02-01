@@ -21,7 +21,7 @@ class Pool : NonCopyable {
 
         void preallocate(const std::size_t n) {
             for (std::size_t i = 0; i < n; i++) {
-                freeElements.pushBack((*factory)());
+                freeElements.push_back((*factory)());
             }
             nAllocated += n;
         }
@@ -50,8 +50,9 @@ class Pool : NonCopyable {
         }
 
         T_ptr acquire() {
+            // Acquire a free object for use
             if (!freeElements.empty()) {
-                return freeElements.popFront();
+                return freeElements.pop_front();
             }
 
             if (nAllocated < nMax) {
@@ -60,10 +61,11 @@ class Pool : NonCopyable {
             }
 
             freeElements.wait();
-            return freeElements.popFront();
+            return freeElements.pop_front();
         }
 
         void release(T_ptr&& element) {
-            freeElements.pushBack(std::move(element));
+            // Release a used object back to the pool
+            freeElements.push_back(std::move(element));
         }
 };

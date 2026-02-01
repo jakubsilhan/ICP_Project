@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include <opencv2/opencv.hpp>
 
 class FaceRecognizer {
@@ -13,5 +15,5 @@ public:
 
 private:
 	cv::CascadeClassifier classifier;
-	cv::VideoCapture captureDevice;
+	cv::VideoCapture capture_device;
 };

@@ -8,13 +8,11 @@
 
 #include "runners/RasterApp.hpp"
 
-RasterApp::RasterApp()
-{
+RasterApp::RasterApp() {
     std::cout << "Constructed...\n";
 }
 
-bool RasterApp::init()
-{
+bool RasterApp::init() {
     try {
         capture = cv::VideoCapture(0, cv::CAP_ANY);
         if (!capture.isOpened())
@@ -31,8 +29,7 @@ bool RasterApp::init()
     return true;
 }
 
-std::vector<uchar> RasterApp::lossy_bw_limit(cv::Mat& input_img, size_t size_limit)
-{
+std::vector<uchar> RasterApp::lossy_bw_limit(cv::Mat& input_img, size_t size_limit) {
     std::string suff(".jpg"); // target format
     if (!cv::haveImageWriter(suff))
         throw std::runtime_error("Can not compress to format:" + suff);
@@ -82,8 +79,7 @@ double psnr(const cv::Mat& original, const cv::Mat& decompressed) {
     return psnr;
 }
 
-std::vector<uchar> RasterApp::lossy_quality_limit(const cv::Mat& frame, const float target_coefficient)
-{
+std::vector<uchar> RasterApp::lossy_quality_limit(const cv::Mat& frame, const float target_coefficient) {
     std::string suff(".jpg");
     if (!cv::haveImageWriter(suff))
         throw std::runtime_error("Cannot compress to format: " + suff);
@@ -108,8 +104,7 @@ std::vector<uchar> RasterApp::lossy_quality_limit(const cv::Mat& frame, const fl
     return bytes;
 }
 
-int RasterApp::run(void)
-{
+int RasterApp::run(void) {
     cv::Mat frame;
     std::vector<uchar> bytes;
     float target_coefficient = 1.0f; // used as size-ratio, or quality-coefficient
@@ -186,10 +181,8 @@ int RasterApp::run(void)
     return EXIT_SUCCESS;
 }
 
-RasterApp::~RasterApp()
-{
+RasterApp::~RasterApp() {
     // clean-up
     cv::destroyAllWindows();
     std::cout << "Bye...\n";
 }
-

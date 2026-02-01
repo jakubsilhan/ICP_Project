@@ -1,19 +1,21 @@
 #pragma once
 
-#include <optional>
+#include <memory>
+#include <vector>
 #include <thread>
-
-#include <opencv2/opencv.hpp>
-#include "include/recognizers/FaceRecognizer.hpp"
-#include "include/recognizers/RedRecognizer.hpp"
-#include "include/utils/FpsMeter.hpp"
-#include "include/concurrency/SyncedDeque.hpp"
-#include "include/concurrency/Pool.hpp"
+#include <string>
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-#include <scenes/IScene.hpp>
+#include <opencv2/opencv.hpp>
+
+#include "scenes/IScene.hpp"
 #include "render/SyncedTexture.hpp"
+#include "concurrency/SyncedDeque.hpp"
+#include "concurrency/Pool.hpp"
+#include "recognizers/FaceRecognizer.hpp"
+#include "recognizers/RedRecognizer.hpp"
+#include "utils/FpsMeter.hpp"
 
 class GLApp {
 public:
@@ -23,49 +25,23 @@ public:
 	bool init_imgui(void);
 	bool init_cv(void);
 	bool run(void);
-	bool run_cv();
 	~GLApp();
 
-	int windowWidth = 800;
-	int windowHeight = 600;
+	int window_width = 800;
+	int window_height = 600;
 
 private:
-	// OpenCV
-	typedef struct RecognizedData {
-		std::unique_ptr<SyncedTexture> frame;
-		std::vector<cv::Point2f> faces;
-		cv::Point2f red;
-	} RecognizedData;
-	RecognizedData defaultRecognizedData;
-	SyncedDeque<RecognizedData> deQueue;
-	Pool<SyncedTexture> framePool;
-	std::atomic<bool> endedMain = false;
-	std::atomic<bool> endedThread = false;
-	std::jthread trackthr;
-	FaceRecognizer faceRecognizer;
-	RedRecognizer redRecognizer;
-	cv::VideoCapture captureDevice;
-	int cameraWidth, cameraHeight;
-	cv::Mat staticImage;
-	cv::Mat warningImage;
-	FpsMeter FPS_main;
-	FpsMeter FPS_tracker;
-
-	void trackerThread();
-
 	// OpenGL
 	GLFWwindow* window = nullptr;
 	bool vsync_on = true;
 	bool first_focused = false;
 	bool antialiasing_on = true;
 	bool fullscreen = false;
-
-	GLFWwindow* trackerWorkerWindow = nullptr;
-	int backupW, backupH, backupX, backupY;
+	GLFWwindow* tracker_worker_window = nullptr;
+	int backup_w, backup_h, backup_x, backup_y;
 
 	// Models
-	std::unique_ptr<IScene> activeScene;
-	bool sceneOn = false;
+	std::unique_ptr<IScene> active_scene;
 
 	// ImGUI
 	bool imgui_full = true;
@@ -80,5 +56,28 @@ private:
 	static void glfw_key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 	static void glfw_scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 	static void glfw_cursor_position_callback(GLFWwindow* window, double xpos, double ypos);
+
+	// Camera tracking
+	typedef struct RecognizedData {
+		std::unique_ptr<SyncedTexture> frame;
+		std::vector<cv::Point2f> faces;
+		cv::Point2f red;
+	} RecognizedData;
+	RecognizedData default_recognized_data;
+	SyncedDeque<RecognizedData> de_queue;
+	Pool<SyncedTexture> frame_pool;
+	std::atomic<bool> ended_main = false;
+	std::atomic<bool> ended_tracker_thread = false;
+	std::jthread tracker_thread;
+	FaceRecognizer face_recognizer;
+	RedRecognizer red_recognizer;
+	cv::VideoCapture capture_device;
+	int camera_width, camera_height;
+
+	void tracker_worker();
+
+	// FPS tracker
+	FpsMeter FPS_main;
+	FpsMeter FPS_tracker;
 
 };

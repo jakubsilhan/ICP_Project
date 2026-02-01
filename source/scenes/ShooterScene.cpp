@@ -1,18 +1,21 @@
 #include <algorithm>
 
-#include "imgui.h"
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_opengl3.h"
+#include <glm/glm.hpp>
+
+// ImGUI
+#include <imgui.h>               // main ImGUI header
+#include <imgui_impl_glfw.h>     // GLFW bindings
+#include <imgui_impl_opengl3.h>  // OpenGL bindings
 
 #include "scenes/ShooterScene.hpp"
 #include "render/Model.hpp"
 #include "utils/Camera.hpp"
 #include "utils/MeshGen.hpp"
 
-ShooterScene::ShooterScene(int windowWidth, int windowHeight) {
-    width = windowWidth;
-    height = windowHeight;
-    camera.Position = glm::vec3(0, 0, 10);
+ShooterScene::ShooterScene(int window_width, int window_height) {
+    width = window_width;
+    height = window_height;
+    camera.position = glm::vec3(0, 0, 10);
     update_projection_matrix();
 
     init_assets();
@@ -23,7 +26,7 @@ void ShooterScene::init_assets() {
     // Load shaders
     shader_library.emplace("simple_shader", std::make_shared<ShaderProgram>(std::filesystem::path("resources/basic_sdr/basic.vert"), std::filesystem::path("resources/basic_sdr/basic.frag")));
     shader_library.emplace("texture_shader", std::make_shared<ShaderProgram>(std::filesystem::path("resources/texture_sdr/tex.vert"), std::filesystem::path("resources/texture_sdr/tex.frag")));
-    shader_library.at("texture_shader")->setUniform("tex0", 0);
+    shader_library.at("texture_shader")->set_uniform("tex0", 0);
 
     // Load meshes
     mesh_library.emplace("cube", generate_cube(cube_atlas_cross));
@@ -47,15 +50,15 @@ void ShooterScene::init_assets() {
 
     // Construct models
     Model wood_box_logos_model;
-    wood_box_logos_model.addMesh(mesh_library.at("cube"), shader_library.at("texture_shader"), texture_library.at("wood_box_logos"));
+    wood_box_logos_model.add_mesh(mesh_library.at("cube"), shader_library.at("texture_shader"), texture_library.at("wood_box_logos"));
     models.emplace("wood_box_logos_object", std::move(wood_box_logos_model));
 
     Model wood_box_model;
-    wood_box_model.addMesh(mesh_library.at("cube_single"), shader_library.at("texture_shader"), texture_library.at("wood_box"));
+    wood_box_model.add_mesh(mesh_library.at("cube_single"), shader_library.at("texture_shader"), texture_library.at("wood_box"));
     models.emplace("wood_box_object", std::move(wood_box_model));
 
     Model globe_model;
-    globe_model.addMesh(mesh_library.at("sphere_highpoly"), shader_library.at("texture_shader"), texture_library.at("globe"));
+    globe_model.add_mesh(mesh_library.at("sphere_highpoly"), shader_library.at("texture_shader"), texture_library.at("globe"));
     models.emplace("globe_object", std::move(globe_model));
 
     // Create index vector
@@ -65,10 +68,10 @@ void ShooterScene::init_assets() {
     // Load audio
     audio_manager.load("ping", "resources/sounds/ping.wav", 0.5f, 10000.0f, 1.0f);
     audio_manager.load("shot", "resources/sounds/gunshot.wav", 0.5f, 10000.0f, 1.0f);
-    audio_manager.loadBGM("bgm", "resources/theme/03_E1M1_At_Doom's_Gate.mp3", 1.0f);
+    audio_manager.load_BGM("bgm", "resources/theme/03_E1M1_At_Doom's_Gate.mp3", 1.0f);
 
     // Play BGM
-    audio_manager.playBGM("bgm", 0.2f);
+    audio_manager.play_BGM("bgm", 0.2f);
 
     // Create targets
     spawn_models(1, "wood_box_logos_object");
@@ -83,11 +86,11 @@ void ShooterScene::set_enabled(bool enabled) {
     this->enabled = enabled;
 }
 
-void ShooterScene::process_input(GLFWwindow* window, GLfloat deltaTime) {
+void ShooterScene::process_input(GLFWwindow* window, GLfloat delta_time) {
     if (!this->enabled) return;
 
-    camera.ProcessInput(window, deltaTime);
-    camera.Position = clamp_to_bounds(camera.Position, world_bounds);
+    camera.process_input(window, delta_time);
+    camera.position = clamp_to_bounds(camera.position, world_bounds);
 }
 
 void ShooterScene::update(float dt) {
@@ -106,12 +109,12 @@ void ShooterScene::update(float dt) {
 
                 // Reinitialize velocity
                 float speed = ((float)rand() / RAND_MAX) * 1.5f + 0.5f;
-                float angleXY = ((float)rand() / RAND_MAX) * 2.0f * glm::pi<float>();
-                float angleZ = ((float)rand() / RAND_MAX) * 2.0f * glm::pi<float>();
+                float angle_xy = ((float)rand() / RAND_MAX) * 2.0f * glm::pi<float>();
+                float angle_z = ((float)rand() / RAND_MAX) * 2.0f * glm::pi<float>();
                 sm.velocity = glm::vec3(
-                    cos(angleXY) * cos(angleZ),
-                    sin(angleXY) * cos(angleZ),
-                    sin(angleZ)
+                    cos(angle_xy) * cos(angle_z),
+                    sin(angle_xy) * cos(angle_z),
+                    sin(angle_z)
                 ) * speed;
             }
             continue;
@@ -129,14 +132,14 @@ void ShooterScene::update(float dt) {
 void ShooterScene::render() {
 
     // Update listener location and clear sounds
-    audio_manager.setListenerPosition(camera.Position.x, camera.Position.y, camera.Position.z, camera.Front.x, camera.Front.y, camera.Front.z);
-    audio_manager.cleanFinishedSounds();
+    audio_manager.set_listener_position(camera.position.x, camera.position.y, camera.position.z, camera.front.x, camera.front.y, camera.front.z);
+    audio_manager.clean_finished_sounds();
 
     for (auto& sm : spawned_models) {
         if (!sm.active) continue;
 
-        sm.model->setPosition(sm.position); // update model's transform
-        sm.model->draw(camera.GetViewMatrix(), projection_matrix);
+        sm.model->set_position(sm.position); // update model's transform
+        sm.model->draw(camera.get_view_matrix(), projection_matrix);
     }
 }
 
@@ -169,13 +172,13 @@ void ShooterScene::spawn_models(int count, const std::string& model_name) {
         t.active = true;
 
         // Random initial velocity
-        float speed = ((float)rand() / RAND_MAX) * (t.maxSpeed-0.5f) + 0.5f;
-        float angleXY = ((float)rand() / RAND_MAX) * 2.0f * glm::pi<float>();
-        float angleZ = ((float)rand() / RAND_MAX) * 2.0f * glm::pi<float>();
+        float speed = ((float)rand() / RAND_MAX) * (t.max_speed-0.5f) + 0.5f;
+        float angle_xy = ((float)rand() / RAND_MAX) * 2.0f * glm::pi<float>();
+        float angle_z = ((float)rand() / RAND_MAX) * 2.0f * glm::pi<float>();
         t.velocity = glm::vec3(
-            cos(angleXY) * cos(angleZ),
-            sin(angleXY) * cos(angleZ),
-            sin(angleZ)
+            cos(angle_xy) * cos(angle_z),
+            sin(angle_xy) * cos(angle_z),
+            sin(angle_z)
         ) * speed;
 
         spawned_models.push_back(t);
@@ -188,8 +191,8 @@ void ShooterScene::spawn_models(int count, const std::string& model_name) {
 Ray ShooterScene::create_ray_from_camera() {
     // Creates Ray for raycasting a shot
     Ray ray;
-    ray.origin = camera.Position;
-    ray.direction = glm::normalize(camera.Front);
+    ray.origin = camera.position;
+    ray.direction = glm::normalize(camera.front);
     return ray;
 }
 
@@ -230,7 +233,7 @@ RayHit ShooterScene::raycast(const Ray& ray) {
         if (!spawned_models[i].active) continue; // Skip inactive
 
         // Get target AABB
-        AABB bbox = spawned_models[i].getBoundingBox();
+        AABB bbox = spawned_models[i].get_bounding_box();
         float t;
 
         // Check if closest hit
@@ -238,7 +241,7 @@ RayHit ShooterScene::raycast(const Ray& ray) {
             if (t < result.distance) {
                 result.hit = true;
                 result.distance = t;
-                result.point = ray.pointAt(t);
+                result.point = ray.point_at(t);
                 result.modelIndex = static_cast<int>(i);
             }
         }
@@ -254,7 +257,7 @@ void ShooterScene::shoot() {
     // Ray cast to find a hit
     RayHit hit = raycast(ray);
     // Play shooting sound
-    audio_manager.play3D("shot", camera.Position.x, camera.Position.y, camera.Position.z);
+    audio_manager.play_3D("shot", camera.position.x, camera.position.y, camera.position.z);
     
     // Hit a target
     if (hit.hit && hit.modelIndex >= 0) {
@@ -269,7 +272,7 @@ void ShooterScene::shoot() {
 
 #pragma region Utils
 std::pair<double, double> ShooterScene::get_last_cursor() {
-    return { cursorLastX, cursorLastY };
+    return { cursor_last_x, cursor_last_y };
 }
 
 void ShooterScene::next_color() {
@@ -285,7 +288,7 @@ void ShooterScene::update_shader_color() {
     case 1: shader_color = glm::vec4(0, 1, 0, 1); break;
     case 2: shader_color = glm::vec4(0, 0, 1, 1); break;
     }
-    shader_library.at("simple_shader")->setUniform("uniformColor", shader_color);
+    shader_library.at("simple_shader")->set_uniform("uniformColor", shader_color);
 }
 
 glm::vec3 ShooterScene::clamp_to_bounds(const glm::vec3& p, const AABB& b) {
@@ -310,13 +313,13 @@ void ShooterScene::on_key(int key, int action) {
         next_color();
         break;
     case GLFW_KEY_X:
-        camera.Reset(glm::vec3(0, 0, 10));
+        camera.reset(glm::vec3(0, 0, 10));
         break;
     case GLFW_KEY_Q:
         for(auto& sm : spawned_models) {
             if (sm.active) {
                 glm::vec3 target_pos = sm.position;
-                audio_manager.play3D("ping", target_pos.x, target_pos.y, target_pos.z);
+                audio_manager.play_3D("ping", target_pos.x, target_pos.y, target_pos.z);
                 break;
             }
         }
@@ -337,15 +340,15 @@ void ShooterScene::on_mouse_button(int button, int action) {
 void ShooterScene::on_mouse_move(double x, double y) {
 
     if (this->enabled) {
-        camera.ProcessMouseMovement(x - cursorLastX, (y - cursorLastY) * -1.0);
+        camera.process_mouse_movement(x - cursor_last_x, (y - cursor_last_y) * -1.0);
     }
 
-    cursorLastX = x;
-    cursorLastY = y;
+    cursor_last_x = x;
+    cursor_last_y = y;
 }
 
 void ShooterScene::on_scroll(double offset) {
-    audio_manager.changeVolume(offset);
+    audio_manager.change_volume(offset);
 }
 
 void ShooterScene::on_resize(int w, int h) {

@@ -1,7 +1,8 @@
 #pragma once
 
-#include <opencv2/opencv.hpp>
 #include <string>
+
+#include <opencv2/opencv.hpp>
 
 class RedRecognizer {
 public:
@@ -11,5 +12,5 @@ public:
 	cv::Point2f find_red(cv::Mat& frame);
 
 private:
-	cv::VideoCapture captureDevice;
+	cv::VideoCapture capture_device;
 };

@@ -73,8 +73,7 @@ Texture::Texture(int cols, int rows, int type, Interpolation interpolation) : Te
     glTextureParameteri(name_, GL_TEXTURE_WRAP_T, GL_REPEAT);
 }
 
-Texture::Texture(cv::Mat const& image, Interpolation interpolation) : Texture{image.cols, image.rows, image.type(), interpolation}
-{
+Texture::Texture(cv::Mat const& image, Interpolation interpolation) : Texture{image.cols, image.rows, image.type(), interpolation} {
     replace_image(image);
 }
 

@@ -5,7 +5,6 @@
 
 #include "scenes/IScene.hpp"
 #include "utils/Camera.hpp"
-
 #include "audio/AudioManager.hpp"
 #include "render/ShaderProgram.hpp"
 #include "assets/Mesh.hpp"
@@ -20,10 +19,10 @@ struct Target {
 	bool active = true;		// Currently spawned or "dead"
 	float scale = 1.0f;		// For bounding box calculation
 	glm::vec3 velocity;		// Target movement
-	float maxSpeed = 5.0f;
+	float max_speed = 5.0f;
 
-	AABB getBoundingBox() const {
-		AABB local = model->getLocalAABB();
+	AABB get_bounding_box() const {
+		AABB local = model->get_local_AABB();
 
 		glm::vec3 min = local.min * scale + position;
 		glm::vec3 max = local.max * scale + position;
@@ -37,7 +36,7 @@ struct Ray {
 	glm::vec3 origin;
 	glm::vec3 direction;
 
-	glm::vec3 pointAt(float t) const {
+	glm::vec3 point_at(float t) const {
 		return origin + direction * t;
 	}
 };
@@ -52,7 +51,7 @@ struct RayHit {
 
 class ShooterScene : public IScene {
 public:
-	ShooterScene(int windowWidth, int windowHeight);
+	ShooterScene(int window_width, int window_height);
 	void init_assets() override;
 	void set_enabled(bool enabled) override;
 	void process_input(GLFWwindow* window, GLfloat deltaTime) override;
@@ -75,8 +74,8 @@ private:
 
 	// Camera
 	Camera camera;
-	double cursorLastX{ 0 };
-	double cursorLastY{ 0 };
+	double cursor_last_x{ 0 };
+	double cursor_last_y{ 0 };
 
 	// Audio
 	AudioManager audio_manager;

@@ -30,14 +30,14 @@ public:
 		return de_queue.back();
 	}
 
-	T popFront() {
+	T pop_front() {
 		std::scoped_lock lock(mux);
 		auto t = std::move(de_queue.front());
 		de_queue.pop_front();
 		return t;
 	}
 
-	std::optional<T> tryPopFront() {
+	std::optional<T> try_pop_front() {
 		std::scoped_lock lock(mux);
 		if (de_queue.empty())
 			return std::nullopt;
@@ -48,14 +48,14 @@ public:
 	}
 
 
-	T popBack() {
+	T pop_back() {
 		std::scoped_lock lock(mux);
 		auto t = std::move(de_queue.back());
 		de_queue.pop_back();
 		return t;
 	}
 
-	void pushBack(T&& item) {
+	void push_back(T&& item) {
 		std::scoped_lock lock(mux);
 		de_queue.emplace_back(std::move(item));
 
@@ -63,7 +63,7 @@ public:
 		cv_sleep.notify_one();
 	}
 
-	void pushFront(T&& item) {
+	void push_front(T&& item) {
 		std::scoped_lock lock(mux);
 		de_queue.emplace_front(std::move(item));
 

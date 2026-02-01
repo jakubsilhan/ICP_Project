@@ -5,7 +5,6 @@
 
 #include "scenes/IScene.hpp"
 #include "utils/Camera.hpp"
-
 #include "audio/AudioManager.hpp"
 #include "render/ShaderProgram.hpp"
 #include "assets/Mesh.hpp"
@@ -14,7 +13,7 @@
 
 class ViewerScene : public IScene {
 public:
-	ViewerScene(int windowWidth, int windowHeight);
+	ViewerScene(int window_width, int window_height);
 
 	void init_assets() override;
 
@@ -38,8 +37,8 @@ private:
 
 	// Camera
 	Camera camera;
-	double cursorLastX{ 0 };
-	double cursorLastY{ 0 };
+	double cursor_last_x{ 0 };
+	double cursor_last_y{ 0 };
 
 	// Audio
 	AudioManager audio_manager;

@@ -1,7 +1,6 @@
 #include "include/render/Drawings.hpp"
 
-void draw_cross(cv::Mat& img, int x, int y, int size, const cv::Scalar& color)
-{
+void draw_cross(cv::Mat& img, int x, int y, int size, const cv::Scalar& color) {
     cv::Point p1(x - size / 2, y);
     cv::Point p2(x + size / 2, y);
     cv::Point p3(x, y - size / 2);
@@ -11,8 +10,7 @@ void draw_cross(cv::Mat& img, int x, int y, int size, const cv::Scalar& color)
     cv::line(img, p3, p4, color, 3);
 }
 
-void draw_cross_normalized(cv::Mat& img, cv::Point2f center_normalized, int size, const cv::Scalar& color)
-{
+void draw_cross_normalized(cv::Mat& img, cv::Point2f center_normalized, int size, const cv::Scalar& color) {
     center_normalized.x = std::clamp(center_normalized.x, 0.0f, 1.0f);
     center_normalized.y = std::clamp(center_normalized.y, 0.0f, 1.0f);
     size = std::clamp(size, 1, std::min(img.cols, img.rows));

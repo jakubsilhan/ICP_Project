@@ -9,12 +9,12 @@ ThreadTrackApp::ThreadTrackApp() {
 
 bool ThreadTrackApp::init() {
     // Classic tracker initializations
-    faceRecognizer.init();
+    face_recognizer.init();
 
-    staticImage = cv::imread("resources/lock.png");
-    warningImage = cv::imread("resources/warning.jpg");
+    static_image = cv::imread("resources/lock.png");
+    warning_image = cv::imread("resources/warning.jpg");
 
-    if (!captureDevice.open(0)) {
+    if (!capture_device.open(0)) {
         std::cerr << "Error: Could not open camera.\n";
         return false;
     }
@@ -43,16 +43,16 @@ bool ThreadTrackApp::init() {
 int ThreadTrackApp::run() {
     cv::Mat frame;
 
-    endedMain = false;
+    ended_main = false;
 
-    std::jthread tracker(&ThreadTrackApp::trackerThread, this);
-    std::jthread gl(&ThreadTrackApp::glThread, this);
+    std::jthread tracker(&ThreadTrackApp::tracker_worker, this);
+    std::jthread gl(&ThreadTrackApp::gl_worker, this);
 
     do {
-        if (endedThread || endedGl) break;
+        if (ended_tracker_thread || ended_gl) break;
 
-        if (!deQueue.empty()) {
-            deQueue.popFront().copyTo(frame);
+        if (!de_queue.empty()) {
+            de_queue.pop_front().copyTo(frame);
             cv::imshow("Scene", frame);
         }
 
@@ -63,44 +63,44 @@ int ThreadTrackApp::run() {
 
     } while (cv::waitKey(10) != 27);
 
-    endedMain = true;
+    ended_main = true;
 
     return 0;
 }
 
-void ThreadTrackApp::trackerThread() {
+void ThreadTrackApp::tracker_worker() {
     cv::Mat frame;
 
-    while(!endedMain){
-        captureDevice.read(frame);
+    while(!ended_main){
+        capture_device.read(frame);
         if (frame.empty()) {
             std::cerr << "Cam disconnected? End of video?" << std::endl;
-            endedThread = true;
+            ended_tracker_thread = true;
             return;
         }
 
         // find face
-        std::vector<cv::Point2f> centers = faceRecognizer.find_face(frame);
+        std::vector<cv::Point2f> centers = face_recognizer.find_face(frame);
 
         // Display logic
         switch (centers.size()) {
             // 1. No face -> static image
         case 0:
-            staticImage.copyTo(frame);            
-            deQueue.pushBack(std::move(frame));
+            static_image.copyTo(frame);            
+            de_queue.push_back(std::move(frame));
             break;
 
             // 2. One face -> track "some" object (track red)
         case 1:
             draw_cross_normalized(frame, centers.front(), 30, CV_RGB(0, 255, 0));
-            draw_cross_normalized(frame, redRecognizer.find_red(frame), 30);
-            deQueue.pushBack(std::move(frame));
+            draw_cross_normalized(frame, red_recognizer.find_red(frame), 30);
+            de_queue.push_back(std::move(frame));
             break;
 
             // 3. More than one face -> display warning
         default:
-            warningImage.copyTo(frame);
-            deQueue.pushBack(std::move(frame));
+            warning_image.copyTo(frame);
+            de_queue.push_back(std::move(frame));
         }
 
         if (FPS_tracker.is_updated())
@@ -109,14 +109,14 @@ void ThreadTrackApp::trackerThread() {
     }
 }
 
-void ThreadTrackApp::glThread() {
+void ThreadTrackApp::gl_worker() {
     // Context must be assigned per thread (and should not be assigned in multiple ones)
     glfwMakeContextCurrent(window);
 
     // Requires assigned context
     if (glewInit() != GLEW_OK) {
         std::cerr << "Error: Could not initialize GLEW.\n";
-        endedGl = true;
+        ended_gl = true;
         return;
     }
 
@@ -131,14 +131,14 @@ void ThreadTrackApp::glThread() {
     TriangleOld triangle;
     if (!triangle.init()) {
         std::cerr << "Error: Could not initialize triangle. \n";
-        endedGl = true;
+        ended_gl = true;
         return;
     }
 
     // Set triangle color
-    triangle.setColor(1, 0, 0, 1);
+    triangle.set_color(1, 0, 0, 1);
 
-    while (!glfwWindowShouldClose(window) && !endedMain) {
+    while (!glfwWindowShouldClose(window) && !ended_main) {
         glClear(GL_COLOR_BUFFER_BIT);
         triangle.draw();
 
@@ -152,7 +152,7 @@ void ThreadTrackApp::glThread() {
         std::this_thread::sleep_for(std::chrono::milliseconds(16));
     }
 
-    endedGl = true;
+    ended_gl = true;
 }
 
 ThreadTrackApp::~ThreadTrackApp()

@@ -6,12 +6,12 @@ TrackApp::TrackApp() {
 }
 
 bool TrackApp::init() {
-    faceRecognizer.init();
+    face_recognizer.init();
 
-    staticImage = cv::imread("resources/lock.png");
-    warningImage = cv::imread("resources/warning.jpg");
+    static_image = cv::imread("resources/lock.png");
+    warning_image = cv::imread("resources/warning.jpg");
 
-    if (!captureDevice.open(0)) {
+    if (!capture_device.open(0)) {
         std::cerr << "Error: Could not open camera.\n";
         return false;
     }
@@ -22,31 +22,31 @@ int TrackApp::run() {
     cv::Mat frame;
 
     do {
-        captureDevice.read(frame);
+        capture_device.read(frame);
         if (frame.empty()) {
             std::cerr << "Cam disconnected? End of video?" << std::endl;
             return -1;
         }
 
         // find face
-        std::vector<cv::Point2f> centers = faceRecognizer.find_face(frame);
+        std::vector<cv::Point2f> centers = face_recognizer.find_face(frame);
 
         // Display logic
         switch (centers.size()) {
             // 1. No face -> static image
             case 0:
-                cv::imshow("app", staticImage);
+                cv::imshow("app", static_image);
                 break;
             
             // 2. One face -> track "some" object (track red)
             case 1:
-                draw_cross_normalized(frame, redRecognizer.find_red(frame), 30);
+                draw_cross_normalized(frame, red_recognizer.find_red(frame), 30);
                 cv::imshow("app", frame);
                 break;
 
             // 3. More than one face -> display warning
             default:
-                cv::imshow("app", warningImage);
+                cv::imshow("app", warning_image);
         }
 
         // Measure and display fps
@@ -59,6 +59,5 @@ int TrackApp::run() {
     return 0;
 }
 
-TrackApp::~TrackApp()
-{
+TrackApp::~TrackApp() {
 }
