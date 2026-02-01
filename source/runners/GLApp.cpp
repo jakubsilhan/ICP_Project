@@ -443,6 +443,10 @@ void GLApp::glfw_key_callback(GLFWwindow* window, int key, int scancode, int act
             break;
         case GLFW_KEY_P: // Screenshot
             {
+                auto cursor_disabled = (glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED);
+                if (cursor_disabled) {
+                    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+                }
                 auto filter_patterns = std::array{ "*.png" }; 
                 const char * path = tinyfd_saveFileDialog(
                     "Save screenshot as...",
@@ -451,11 +455,14 @@ void GLApp::glfw_key_callback(GLFWwindow* window, int key, int scancode, int act
                     filter_patterns.data(),
                     "PNG files"
                 );
+                if (cursor_disabled) {
+                    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+                }
                 if (!path) {
                     std::cout << "Saving screenshot canceled" << std::endl;
                     break;
                 }
-                if (!makeScreenshot(path, 0, 0, this_inst->window_width, this_inst->window_height)) {
+                if (!make_screenshot(path, 0, 0, this_inst->window_width, this_inst->window_height)) {
                     std::cout << "Failed to save screenshot to: " << path << std::endl;
                     break;
                 }
