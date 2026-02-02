@@ -42,9 +42,9 @@ The build an run on Kubuntu 24.04 LTS:
 
   2. Set up vcpkg by following [the vcpkg tutorial at Microsoft Learn](https://learn.microsoft.com/en-us/vcpkg/get_started/get-started?pivots=shell-bash).
 
-     > [!NOTE]
-     > Make sure you leave the `vcpkg` directory after setting vcpkg up,
-     > so you don't do the following steps in the `vcpkg` directory.
+  > [!NOTE]
+  > Make sure you leave the `vcpkg` directory after setting vcpkg up,
+  > so you don't do the following steps in the `vcpkg` directory.
 
   3. Clone the repository and change current directory to it:
 
